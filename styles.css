@@ -52,7 +52,7 @@ input {
   margin: 0 auto;
   padding: calc(env(safe-area-inset-top, 0px) + 10px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px);
   display: grid;
-  grid-template-rows: auto auto auto auto auto 1fr;
+  grid-template-rows: auto auto auto auto 1fr;
   gap: 6px;
 }
 
@@ -74,13 +74,8 @@ input {
   background: linear-gradient(135deg, rgba(255, 183, 3, 0.18), rgba(255, 107, 53, 0.14));
 }
 
-.status-strip {
-  background: linear-gradient(135deg, rgba(94, 234, 212, 0.16), rgba(127, 90, 240, 0.12));
-}
-
 .top-strip,
 .dice-strip,
-.status-strip,
 .scoreboard-panel {
   padding: 5px;
 }
@@ -104,9 +99,19 @@ input {
 }
 
 .player-chip.is-active {
-  background: linear-gradient(180deg, rgba(255, 107, 53, 0.34), rgba(255, 77, 141, 0.22));
-  border-color: rgba(255, 209, 102, 0.44);
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  background: linear-gradient(180deg, rgba(47, 99, 200, 0.55), rgba(11, 29, 73, 0.88));
+  border-color: rgba(191, 242, 183, 0.78);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14), 0 0 0 2px rgba(143, 220, 138, 0.18);
+}
+
+.player-chip.is-active input,
+.player-chip.is-active strong,
+.player-chip.is-active .player-slot {
+  color: #ffffff;
+}
+
+.player-chip.is-active .player-slot {
+  background: rgba(255, 255, 255, 0.24);
 }
 
 .player-slot {
@@ -233,39 +238,6 @@ input {
 .roll-button {
   min-height: 50px;
   border-radius: 16px;
-}
-
-.status-strip {
-  display: grid;
-  grid-template-columns: 1.5fr repeat(3, minmax(0, 1fr));
-  gap: 6px;
-}
-
-.status-pill {
-  min-height: 28px;
-  padding: 4px 7px;
-  border-radius: var(--radius-md);
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
-}
-
-.status-pill span {
-  display: block;
-  font-size: 0.54rem;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--muted);
-}
-
-.status-pill strong {
-  display: block;
-  margin-top: 1px;
-  font-size: 0.82rem;
-}
-
-.current-pill strong {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
 .install-warning {
@@ -489,7 +461,6 @@ thead th:first-child,
 
   .player-chip input,
   .player-chip strong,
-  .status-pill strong,
   .category-label,
   .score-button,
   .score-value,
@@ -504,10 +475,6 @@ thead th:first-child,
   .die,
   .roll-button {
     min-height: 46px;
-  }
-
-  .status-strip {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 
   th,

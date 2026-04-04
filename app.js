@@ -36,10 +36,6 @@ const els = {
   playerOneHeading: document.querySelector("#player-one-heading"),
   playerTwoHeading: document.querySelector("#player-two-heading"),
   newGameButton: document.querySelector("#new-game-button"),
-  currentPlayerLabel: document.querySelector("#current-player-label"),
-  roundLabel: document.querySelector("#round-label"),
-  rollsLeftValue: document.querySelector("#rolls-left-value"),
-  bonusStatus: document.querySelector("#bonus-status"),
   rollButton: document.querySelector("#roll-button"),
   installWarning: document.querySelector("#install-warning"),
   winnerBanner: document.querySelector("#winner-banner"),
@@ -403,9 +399,7 @@ function renderScoreboard() {
 }
 
 function renderStatus() {
-  const currentPlayer = getCurrentPlayer();
   const totals = state.players.map(getPlayerTotals);
-  const currentTotals = totals[state.currentPlayer];
 
   els.playerOneInput.value = state.players[0].name;
   els.playerTwoInput.value = state.players[1].name;
@@ -415,15 +409,8 @@ function renderStatus() {
   els.playerTwoTotal.textContent = String(totals[1].grandTotal);
   els.playerOneChip.classList.toggle("is-active", state.currentPlayer === 0);
   els.playerTwoChip.classList.toggle("is-active", state.currentPlayer === 1);
-  els.currentPlayerLabel.textContent = currentPlayer.name;
-  els.roundLabel.textContent = `${Math.min(getRoundNumber(), 13)} / 13`;
-  els.rollsLeftValue.textContent = String(state.rollsLeft);
-  els.bonusStatus.textContent = currentTotals.yahtzeeBonusScore > 0
-    ? `${currentTotals.upperSubtotal >= 63 ? "Made" : `${Math.max(63 - currentTotals.upperSubtotal, 0)} to go`} • +${currentTotals.yahtzeeBonusScore}`
-    : currentTotals.upperSubtotal >= 63
-      ? "Made"
-      : `${Math.max(63 - currentTotals.upperSubtotal, 0)} to go`;
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver();
+  els.rollButton.textContent = `Roll (${isGameOver() ? 0 : state.rollsLeft})`;
 
   if (isOfflineInstallBlocked) {
     els.installWarning.hidden = false;
@@ -548,7 +535,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=8").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=9").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

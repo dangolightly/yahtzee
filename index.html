@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=10" />
+    <link rel="stylesheet" href="styles.css?v=11" />
   </head>
   <body>
     <div class="app-shell">
@@ -33,26 +33,7 @@
 
       <section class="dice-strip panel" aria-label="Dice tray">
         <div id="dice-grid" class="dice-grid"></div>
-        <button id="roll-button" class="primary-button roll-button" type="button">Roll</button>
-      </section>
-
-      <section class="status-strip panel">
-        <div class="status-pill current-pill">
-          <span>Turn</span>
-          <strong id="current-player-label">Player 1</strong>
-        </div>
-        <div class="status-pill">
-          <span>Round</span>
-          <strong id="round-label">1 / 13</strong>
-        </div>
-        <div class="status-pill">
-          <span>Rolls</span>
-          <strong id="rolls-left-value">3</strong>
-        </div>
-        <div class="status-pill">
-          <span>Bonus</span>
-          <strong id="bonus-status">63 to go</strong>
-        </div>
+        <button id="roll-button" class="primary-button roll-button" type="button">Roll (3)</button>
       </section>
 
       <p id="install-warning" class="install-warning" hidden></p>
@@ -86,6 +67,6 @@
       </button>
     </template>
 
-    <script type="module" src="app.js?v=10"></script>
+    <script type="module" src="app.js?v=11"></script>
   </body>
 </html>

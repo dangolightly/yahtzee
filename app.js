@@ -35,8 +35,6 @@ const els = {
   playerTwoInput: document.querySelector("#player-two-input"),
   playerOneChip: document.querySelector("#player-one-chip"),
   playerTwoChip: document.querySelector("#player-two-chip"),
-  playerOneSeatTag: document.querySelector("#player-one-seat-tag"),
-  playerTwoSeatTag: document.querySelector("#player-two-seat-tag"),
   playerOneTotal: document.querySelector("#player-one-total"),
   playerTwoTotal: document.querySelector("#player-two-total"),
   playerOneHeading: document.querySelector("#player-one-heading"),
@@ -632,8 +630,6 @@ function renderStatus() {
   els.playerOneChip.classList.toggle("is-awaiting-name", online && !accepted);
   els.playerOneChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
   els.playerTwoChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
-  els.playerOneSeatTag.hidden = ownedSeat !== 0;
-  els.playerTwoSeatTag.hidden = ownedSeat !== 1;
 
   els.playerOneInput.placeholder = online && !accepted ? "Enter your name here" : "";
   els.playerTwoInput.placeholder = "";
@@ -1147,7 +1143,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=45").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=46").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

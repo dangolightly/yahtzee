@@ -236,7 +236,7 @@ input {
 
 .player-chip {
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto auto;
+  grid-template-columns: 24px minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px;
   min-height: 28px;
@@ -334,20 +334,6 @@ input {
   min-width: 28px;
   text-align: right;
   font-size: 0.86rem;
-}
-
-.seat-tag {
-  min-width: 34px;
-  padding: 1px 6px;
-  border-radius: 999px;
-  background: rgba(255, 209, 102, 0.18);
-  border: 1px solid rgba(255, 209, 102, 0.45);
-  color: #fff5c8;
-  font-size: 0.62rem;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  text-align: center;
 }
 
 .primary-button,
@@ -756,7 +742,7 @@ thead th:first-child,
   }
 
   .player-chip {
-    grid-template-columns: 20px minmax(0, 1fr) auto auto;
+    grid-template-columns: 20px minmax(0, 1fr) auto;
     min-height: 26px;
     padding: 2px 4px;
   }

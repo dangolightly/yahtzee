@@ -38,12 +38,10 @@ const els = {
   newGameButton: document.querySelector("#new-game-button"),
   currentPlayerLabel: document.querySelector("#current-player-label"),
   roundLabel: document.querySelector("#round-label"),
-  statusMessage: document.querySelector("#status-message"),
   rollsLeftValue: document.querySelector("#rolls-left-value"),
   bonusStatus: document.querySelector("#bonus-status"),
   rollButton: document.querySelector("#roll-button"),
   installWarning: document.querySelector("#install-warning"),
-  hintOutput: document.querySelector("#hint-output"),
   winnerBanner: document.querySelector("#winner-banner"),
   winnerConfetti: document.querySelector("#winner-confetti"),
   winnerTitle: document.querySelector("#winner-title"),
@@ -371,7 +369,6 @@ function renderScoreboard() {
   els.scoreboardBody.innerHTML = `${renderCategoryRows("Upper section", "upper")}${renderCategoryRows("Lower section", "lower")}`;
 
   const totals = state.players.map(getPlayerTotals);
-  const winnerText = isGameOver() ? getWinnerSummary().footer : `${getCurrentPlayer().name} is up.`;
   els.scoreboardFooter.innerHTML = `
     <tr class="totals-row">
       <td>Upper subtotal</td>
@@ -398,9 +395,10 @@ function renderScoreboard() {
       <td>${totals[0].grandTotal}</td>
       <td>${totals[1].grandTotal}</td>
     </tr>
+    ${isGameOver() ? `
     <tr class="winner-row">
-      <td colspan="3">${winnerText}</td>
-    </tr>
+      <td colspan="3">${getWinnerSummary().footer}</td>
+    </tr>` : ""}
   `;
 }
 
@@ -452,17 +450,6 @@ function renderStatus() {
     els.winnerCopy.textContent = "";
   }
 
-  if (isGameOver()) {
-    els.statusMessage.textContent = "Final dice are in. Start a new game for a rematch.";
-  } else if (!state.turnStarted) {
-    els.statusMessage.textContent = `${currentPlayer.name}, take the first roll.`;
-  } else if (state.rollsLeft === 0) {
-    els.statusMessage.textContent = `${currentPlayer.name}, score this turn.`;
-  } else {
-    els.statusMessage.textContent = `${currentPlayer.name}, hold what you want and roll again or score now.`;
-  }
-
-  els.hintOutput.textContent = getHintText();
 }
 
 function render() {
@@ -561,7 +548,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=7").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=8").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

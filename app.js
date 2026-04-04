@@ -2,7 +2,6 @@ const STORAGE_KEY = "yahtzee-state-v2";
 const CLIENT_ID_KEY = "yahtzee-client-id-v2";
 const PROFILE_NAME_KEY = "yahtzee-profile-name-v1";
 const SESSION_POLL_MS = 4000;
-const REQUEST_TIMEOUT_MS = 12000;
 
 const categories = [
   { key: "ones", label: "Ones", section: "upper" },
@@ -35,21 +34,13 @@ const els = {
   playerTwoInput: document.querySelector("#player-two-input"),
   playerOneChip: document.querySelector("#player-one-chip"),
   playerTwoChip: document.querySelector("#player-two-chip"),
+  playerOneSeatTag: document.querySelector("#player-one-seat-tag"),
+  playerTwoSeatTag: document.querySelector("#player-two-seat-tag"),
   playerOneTotal: document.querySelector("#player-one-total"),
   playerTwoTotal: document.querySelector("#player-two-total"),
   playerOneHeading: document.querySelector("#player-one-heading"),
   playerTwoHeading: document.querySelector("#player-two-heading"),
   newGameButton: document.querySelector("#new-game-button"),
-  nameEntryModal: document.querySelector("#name-entry-modal"),
-  nameEntryCard: document.querySelector("#name-entry-form"),
-  nameEntryForm: document.querySelector("#name-entry-form"),
-  nameEntryTitle: document.querySelector("#name-entry-title"),
-  nameEntryCopy: document.querySelector("#name-entry-copy"),
-  nameEntryAccepted: document.querySelector("#name-entry-accepted"),
-  nameEntryInput: document.querySelector("#name-entry-input"),
-  nameEntryButton: document.querySelector("#name-entry-button"),
-  nameEntryQueueSection: document.querySelector("#name-entry-queue-section"),
-  nameEntryList: document.querySelector("#name-entry-list"),
   rollButton: document.querySelector("#roll-button"),
   lobbyPanel: document.querySelector("#lobby-panel"),
   lobbyCopy: document.querySelector("#lobby-copy"),
@@ -200,15 +191,10 @@ const session = {
   waitingGames: [],
   currentGameId: null,
   disconnectSent: false,
-  submittingName: false,
-  joiningGameId: null,
 };
 
 let completedResetHandle = null;
 let completedResetPending = false;
-let nameEntryModalVisible = false;
-let nameEntryModalStage = "";
-let enableOnlinePromise = null;
 
 function getCounts(dice) {
   return dice.reduce((counts, value) => {
@@ -357,30 +343,8 @@ function hasAcceptedName() {
   return isOnlineMode() && ["waiting", "active", "completed"].includes(session.phase);
 }
 
-function isAwaitingOnlineName() {
-  return isOnlineMode() && !hasAcceptedName();
-}
-
-function isAwaitingChallengerChoice() {
-  return isOnlineMode() && hasAcceptedName() && session.phase !== "active" && session.phase !== "completed";
-}
-
 function isDefaultWinActive() {
   return isOnlineMode() && session.phase === "completed" && !isGameOver();
-}
-
-function getAcceptedProfileName() {
-  const explicitName = session.profileName.trim();
-  if (explicitName) {
-    return explicitName;
-  }
-
-  if (!hasAcceptedName()) {
-    return "";
-  }
-
-  const fallbackPlayer = state.players[session.playerIndex ?? 0];
-  return String(fallbackPlayer?.name || "").trim().slice(0, 24);
 }
 
 function clearCompletedResetTimer() {
@@ -433,95 +397,50 @@ function renderNotice() {
 }
 
 function renderLobby() {
-  els.lobbyPanel.hidden = true;
-  els.queueSection.hidden = true;
-  els.queueList.innerHTML = "";
-}
-
-function renderNameEntryModal() {
-  const showModal = session.submittingName || isAwaitingOnlineName() || isAwaitingChallengerChoice();
-  els.nameEntryModal.hidden = !showModal;
-
-  if (!showModal) {
-    nameEntryModalVisible = false;
-    nameEntryModalStage = "";
-    els.nameEntryAccepted.hidden = true;
-    els.nameEntryQueueSection.hidden = true;
-    els.nameEntryList.innerHTML = "";
+  const showLobby = isOnlineMode() && session.phase !== "active" && session.phase !== "completed";
+  if (!showLobby) {
+    els.lobbyPanel.hidden = true;
+    els.queueSection.hidden = true;
+    els.queueList.innerHTML = "";
     return;
   }
 
-  const enteredName = session.profileName.trim();
-  const acceptedName = getAcceptedProfileName();
-  const showingQueue = session.submittingName || isAwaitingChallengerChoice();
-  const stage = !showingQueue ? "name" : session.submittingName ? "loading" : "queue";
-  const queueNotice = session.notice && !session.notice.toLowerCase().startsWith("enter your name")
-    ? session.notice
-    : "";
+  els.lobbyPanel.hidden = false;
+  const accepted = hasAcceptedName();
+  els.queueSection.hidden = !accepted;
 
-  updateInputValue(els.nameEntryInput, session.profileName);
-  els.nameEntryCard?.classList.toggle("is-queue-mode", showingQueue);
-  els.nameEntryAccepted.hidden = !acceptedName || !showingQueue;
-  els.nameEntryAccepted.textContent = acceptedName ? `Name: ${acceptedName}` : "";
-  els.nameEntryInput.hidden = showingQueue;
-  els.nameEntryButton.hidden = showingQueue;
-  els.nameEntryQueueSection.hidden = !showingQueue;
-
-  if (!showingQueue) {
-    els.nameEntryTitle.textContent = "Step 1: Enter your name";
-    els.nameEntryCopy.textContent = session.notice || "Enter your name and hit Enter.";
-    els.nameEntryInput.disabled = false;
-    els.nameEntryButton.disabled = !enteredName;
-    els.nameEntryButton.textContent = "Enter";
-    els.nameEntryList.innerHTML = "";
-  } else if (session.submittingName) {
-    els.nameEntryTitle.textContent = "Opening Challenger List";
-    els.nameEntryCopy.textContent = "Opening challenger list...";
-    els.nameEntryList.innerHTML = '<p class="queue-empty">Waiting for challenger to join.</p>';
-  } else if (session.waitingGames.length === 0) {
-    els.nameEntryTitle.textContent = "Step 2: Choose challenger";
-    els.nameEntryCopy.textContent = session.joiningGameId
-      ? "Opening your game..."
-      : queueNotice || "Waiting for challenger.";
-    els.nameEntryList.innerHTML = '<p class="queue-empty">Waiting for challenger to join.</p>';
-  } else {
-    els.nameEntryTitle.textContent = "Step 2: Choose challenger";
-    els.nameEntryCopy.textContent = session.joiningGameId
-      ? "Opening your game..."
-      : queueNotice || "Choose a challenger below.";
-    els.nameEntryList.innerHTML = session.waitingGames.map((game, index) => `
-      <button class="queue-card" type="button" data-join-game="${game.id}" ${session.joiningGameId ? "disabled" : ""}>
-        <div>
-          <strong>${index + 1}. ${game.hostName}</strong>
-          <span>${session.joiningGameId === game.id ? "Opening game..." : "Tap to accept this challenger."}</span>
-        </div>
-      </button>
-    `).join("");
+  if (!accepted) {
+    els.lobbyCopy.textContent = session.notice
+      || (session.reconnecting
+        ? "Trying to reconnect..."
+        : session.profileName
+        ? "Step 1: Press Enter on your name in Player 1 to open the challenger list."
+        : "Step 1: Type your name in Player 1, then press Enter to open the challenger list.");
+    els.lobbyCopy.hidden = !els.lobbyCopy.textContent;
+    els.queueList.innerHTML = "";
+    return;
   }
 
-  if (!nameEntryModalVisible || nameEntryModalStage !== stage) {
-    window.requestAnimationFrame(() => {
-      if (els.nameEntryModal.hidden) {
-        return;
-      }
-
-      if (stage === "name") {
-        els.nameEntryInput.focus();
-        els.nameEntryInput.select();
-        return;
-      }
-
-      const firstButton = els.nameEntryList.querySelector("[data-join-game]");
-      if (firstButton) {
-        firstButton.focus();
-      } else {
-        els.nameEntryForm.focus();
-      }
-    });
+  if (session.waitingGames.length === 0) {
+    els.lobbyCopy.textContent = session.notice
+      || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Choose a challenger below. If the list is empty, stay here and it will update.");
+    els.lobbyCopy.hidden = false;
+    els.queueList.innerHTML = '<p class="queue-empty">No challengers available yet. Waiting for one to appear...</p>';
+    return;
   }
 
-  nameEntryModalVisible = true;
-  nameEntryModalStage = stage;
+  els.lobbyCopy.textContent = session.notice
+    || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Tap a challenger below to start.");
+  els.lobbyCopy.hidden = false;
+
+  els.queueList.innerHTML = session.waitingGames.map((game, index) => `
+    <button class="queue-card" type="button" data-join-game="${game.id}">
+      <div>
+        <strong>${index + 1}. ${game.hostName}</strong>
+        <span>Tap to accept this challenger.</span>
+      </div>
+    </button>
+  `).join("");
 }
 
 function renderDice() {
@@ -632,12 +551,13 @@ function renderStatus() {
   const totals = state.players.map(getPlayerTotals);
   const ownedSeat = isOnlineMode() && session.phase === "active" ? session.playerIndex : null;
   const online = isOnlineMode();
+  const accepted = hasAcceptedName();
   const rollsLeft = isGameOver() ? 0 : state.rollsLeft;
   const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
   const isMyTurn = isOnlineActiveTurn && ownedSeat === state.currentPlayer;
   const isDefaultCompleted = isDefaultWinActive();
-  const playerOneLabel = state.players[0].name;
-  const playerTwoLabel = state.players[1].name;
+  const playerOneLabel = online && !accepted ? session.profileName : state.players[0].name;
+  const playerTwoLabel = online && !accepted ? "" : state.players[1].name;
 
   updateInputValue(els.playerOneInput, playerOneLabel);
   updateInputValue(els.playerTwoInput, playerTwoLabel);
@@ -649,12 +569,15 @@ function renderStatus() {
   els.playerTwoChip.classList.toggle("is-active", isOnlineActiveTurn ? (isMyTurn && ownedSeat === 1) : state.currentPlayer === 1);
   els.playerOneChip.classList.toggle("is-owned", ownedSeat === 0);
   els.playerTwoChip.classList.toggle("is-owned", ownedSeat === 1);
+  els.playerOneChip.classList.toggle("is-awaiting-name", online && !accepted);
   els.playerOneChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
   els.playerTwoChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
+  els.playerOneSeatTag.hidden = ownedSeat !== 0;
+  els.playerTwoSeatTag.hidden = ownedSeat !== 1;
 
-  els.playerOneInput.placeholder = "";
+  els.playerOneInput.placeholder = online && !accepted ? "Enter your name here" : "";
   els.playerTwoInput.placeholder = "";
-  els.playerOneInput.disabled = online;
+  els.playerOneInput.disabled = online && accepted;
   els.playerTwoInput.disabled = online;
   els.newGameButton.disabled = online ? !(session.phase === "active" || session.phase === "completed") : false;
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
@@ -704,7 +627,6 @@ function renderStatus() {
 
 function render() {
   renderLobby();
-  renderNameEntryModal();
   renderStatus();
   renderDice();
   renderScoreboard();
@@ -778,37 +700,23 @@ function resetGameLocal() {
 }
 
 async function fetchJson(url, options = {}) {
-  const { timeoutMs = REQUEST_TIMEOUT_MS, ...fetchOptions } = options;
-  const controller = new AbortController();
-  const timeoutHandle = window.setTimeout(() => controller.abort(), timeoutMs);
+  const response = await fetch(url, {
+    cache: "no-store",
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  });
 
-  try {
-    const response = await fetch(url, {
-      cache: "no-store",
-      ...fetchOptions,
-      signal: controller.signal,
-      headers: {
-        "Content-Type": "application/json",
-        ...(fetchOptions.headers || {}),
-      },
-    });
-
-    const payload = await response.json().catch(() => null);
-    if (!response.ok) {
-      const error = new Error(payload?.error || `Request failed: ${response.status}`);
-      error.payload = payload;
-      throw error;
-    }
-
-    return payload;
-  } catch (error) {
-    if (error?.name === "AbortError") {
-      throw new Error("Request timed out. Please try again.");
-    }
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    const error = new Error(payload?.error || `Request failed: ${response.status}`);
+    error.payload = payload;
     throw error;
-  } finally {
-    window.clearTimeout(timeoutHandle);
   }
+
+  return payload;
 }
 
 function applyOnlineSnapshot(snapshot) {
@@ -821,8 +729,6 @@ function applyOnlineSnapshot(snapshot) {
   session.disconnectSent = false;
   session.waitingGames = snapshot.lobby?.waitingGames || [];
   session.currentGameId = snapshot.game?.id || snapshot.lobby?.currentGameId || null;
-  session.submittingName = false;
-  session.joiningGameId = null;
   if (typeof snapshot.profileName === "string") {
     const nextProfileName = snapshot.profileName.trim() ? snapshot.profileName.slice(0, 24) : session.profileName;
     session.profileName = nextProfileName;
@@ -852,7 +758,7 @@ async function syncOnlineState() {
 }
 
 async function submitProfileUpdate() {
-  if (!isOnlineMode() || session.submittingName) {
+  if (!isOnlineMode()) {
     return;
   }
 
@@ -862,9 +768,6 @@ async function submitProfileUpdate() {
   }
 
   try {
-    session.submittingName = true;
-    session.notice = "";
-    render();
     const snapshot = await fetchJson("/api/profile", {
       method: "POST",
       body: JSON.stringify({ clientId: session.clientId, name: session.profileName }),
@@ -879,47 +782,11 @@ async function submitProfileUpdate() {
       session.notice = error.message || "Could not update your name.";
       render();
     }
-  } finally {
-    session.submittingName = false;
-    render();
   }
-}
-
-async function submitNameEntry() {
-  if (session.submittingName || !isAwaitingOnlineName()) {
-    return;
-  }
-
-  session.profileName = String(els.nameEntryInput.value || "").slice(0, 24);
-  if (!session.profileName.trim()) {
-    session.notice = "Enter your name to continue.";
-    render();
-    return;
-  }
-
-  if (!isOnlineMode()) {
-    session.notice = "Connecting to live play...";
-    render();
-    await tryEnableOnlineMode();
-    if (!isOnlineMode()) {
-      session.notice = "Could not reach the live game right now.";
-      render();
-      return;
-    }
-  }
-
-  await submitProfileUpdate();
 }
 
 async function joinOnlineGame(gameId) {
-  if (session.joiningGameId) {
-    return;
-  }
-
   try {
-    session.joiningGameId = gameId;
-    session.notice = "";
-    render();
     const snapshot = await fetchJson("/api/lobby/join", {
       method: "POST",
       body: JSON.stringify({ clientId: session.clientId, gameId, name: session.profileName }),
@@ -934,9 +801,6 @@ async function joinOnlineGame(gameId) {
       session.notice = error.message || "Could not challenge that player.";
       render();
     }
-  } finally {
-    session.joiningGameId = null;
-    render();
   }
 }
 
@@ -985,33 +849,21 @@ async function resetCompletedOnlineState() {
 }
 
 async function tryEnableOnlineMode() {
-  if (enableOnlinePromise) {
-    return enableOnlinePromise;
+  try {
+    const snapshot = await fetchJson(`/api/session?clientId=${encodeURIComponent(session.clientId)}`);
+    applyOnlineSnapshot(snapshot);
+    startSessionPolling();
+  } catch {
+    session.mode = "offline";
+    session.role = null;
+    session.playerIndex = null;
+    session.phase = "offline";
+    session.notice = "";
+    session.waitingGames = [];
+    session.currentGameId = null;
+    session.disconnectSent = false;
+    render();
   }
-
-  enableOnlinePromise = (async () => {
-    try {
-      const snapshot = await fetchJson(`/api/session?clientId=${encodeURIComponent(session.clientId)}`);
-      applyOnlineSnapshot(snapshot);
-      startSessionPolling();
-    } catch {
-      session.mode = "offline";
-      session.role = null;
-      session.playerIndex = null;
-      session.phase = "offline";
-      session.notice = "";
-      session.waitingGames = [];
-      session.currentGameId = null;
-      session.disconnectSent = false;
-      session.submittingName = false;
-      session.joiningGameId = null;
-      render();
-    } finally {
-      enableOnlinePromise = null;
-    }
-  })();
-
-  return enableOnlinePromise;
 }
 
 els.rollButton.addEventListener("click", () => {
@@ -1030,49 +882,6 @@ els.newGameButton.addEventListener("click", () => {
   }
 
   resetGameLocal();
-});
-
-els.nameEntryForm.addEventListener("submit", (event) => {
-  event.preventDefault();
-  submitNameEntry();
-});
-
-els.nameEntryInput.addEventListener("input", (event) => {
-  if (!isAwaitingOnlineName()) {
-    return;
-  }
-
-  session.profileName = String(event.target.value || "").slice(0, 24);
-  session.notice = "";
-  renderNameEntryModal();
-});
-
-els.nameEntryInput.addEventListener("change", (event) => {
-  if (!isAwaitingOnlineName()) {
-    return;
-  }
-
-  session.profileName = String(event.target.value || "").slice(0, 24);
-  session.notice = "";
-  renderNameEntryModal();
-});
-
-els.nameEntryInput.addEventListener("keydown", (event) => {
-  if (!isAwaitingOnlineName() || event.key !== "Enter") {
-    return;
-  }
-
-  event.preventDefault();
-  submitNameEntry();
-});
-
-els.nameEntryButton.addEventListener("click", (event) => {
-  if (!isAwaitingOnlineName()) {
-    return;
-  }
-
-  event.preventDefault();
-  submitNameEntry();
 });
 
 els.playerOneInput.addEventListener("change", (event) => {
@@ -1115,17 +924,14 @@ els.playerTwoInput.addEventListener("blur", (event) => {
   }
 });
 
-function handleJoinGameClick(event) {
+els.queueList.addEventListener("click", (event) => {
   const button = event.target.closest("[data-join-game]");
   if (!button || button.disabled) {
     return;
   }
 
   joinOnlineGame(button.dataset.joinGame);
-}
-
-els.queueList.addEventListener("click", handleJoinGameClick);
-els.nameEntryList.addEventListener("click", handleJoinGameClick);
+});
 
 els.diceGrid.addEventListener("click", (event) => {
   const button = event.target.closest(".die");
@@ -1158,7 +964,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=42").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=43").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

@@ -1,6 +1,5 @@
 node_modules/
 npm-debug.log*
 *.log
-match-history.ndjson
 .DS_Store
 Thumbs.db

@@ -395,7 +395,8 @@ function renderLobby() {
 
   if (!accepted) {
     els.lobbyCopy.textContent = session.notice
-      || (session.reconnecting ? "Trying to reconnect..." : "Enter your name here.");
+      || (session.reconnecting ? "Trying to reconnect..." : "");
+    els.lobbyCopy.hidden = !els.lobbyCopy.textContent;
     els.queueList.innerHTML = "";
     return;
   }
@@ -403,12 +404,14 @@ function renderLobby() {
   if (session.waitingGames.length === 0) {
     els.lobbyCopy.textContent = session.notice
       || (session.reconnecting ? "Trying to reconnect..." : "Waiting for a challenger to become available.");
+    els.lobbyCopy.hidden = false;
     els.queueList.innerHTML = '<p class="queue-empty">No challengers yet. Waiting...</p>';
     return;
   }
 
   els.lobbyCopy.textContent = session.notice
     || (session.reconnecting ? "Trying to reconnect..." : "Tap a challenger to accept them.");
+  els.lobbyCopy.hidden = false;
 
   els.queueList.innerHTML = session.waitingGames.map((game, index) => `
     <button class="queue-card" type="button" data-join-game="${game.id}">
@@ -532,6 +535,7 @@ function renderStatus() {
   const rollsLeft = isGameOver() ? 0 : state.rollsLeft;
   const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
   const isMyTurn = isOnlineActiveTurn && ownedSeat === state.currentPlayer;
+  const isDefaultCompleted = online && session.phase === "completed";
   const playerOneLabel = online && !accepted ? session.profileName : state.players[0].name;
   const playerTwoLabel = online && !accepted ? "" : state.players[1].name;
 
@@ -558,7 +562,9 @@ function renderStatus() {
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
   els.rollButton.classList.toggle("is-your-turn", isMyTurn);
   els.rollButton.classList.toggle("is-their-turn", isOnlineActiveTurn && !isMyTurn);
-  els.rollButton.textContent = isOnlineActiveTurn
+  els.rollButton.textContent = isDefaultCompleted
+    ? "Game Over"
+    : isOnlineActiveTurn
     ? `${isMyTurn ? "Your" : "Their"} Roll (${rollsLeft})`
     : `Roll (${rollsLeft})`;
 
@@ -567,8 +573,12 @@ function renderStatus() {
 
   renderNotice();
 
-  if (isGameOver()) {
-    const winnerSummary = getWinnerSummary();
+  if (isGameOver() || isDefaultCompleted) {
+    const winnerSummary = isGameOver() ? getWinnerSummary() : {
+      isTie: false,
+      title: "Default Win",
+      copy: session.notice || "Your opponent left the game.",
+    };
     els.winnerBanner.hidden = false;
     els.winnerBanner.classList.add("is-live");
     els.winnerBanner.classList.toggle("is-tie", winnerSummary.isTie);
@@ -684,7 +694,7 @@ function applyOnlineSnapshot(snapshot) {
   session.role = snapshot.role;
   session.playerIndex = snapshot.playerIndex;
   session.phase = snapshot.lobby?.phase || "lobby";
-  session.notice = "";
+  session.notice = session.phase === "completed" ? (snapshot.lobby?.message || "") : "";
   session.reconnecting = false;
   session.disconnectSent = false;
   session.waitingGames = snapshot.lobby?.waitingGames || [];
@@ -897,7 +907,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=30").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=33").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.
@@ -905,12 +915,22 @@ if ("serviceWorker" in navigator) {
   });
 }
 
+window.addEventListener("beforeunload", () => {
+  sendDisconnectSignal();
+});
+
 window.addEventListener("pagehide", (event) => {
   if (event.persisted) {
     return;
   }
 
   sendDisconnectSignal();
+});
+
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "hidden") {
+    sendDisconnectSignal();
+  }
 });
 
 els.playerOneInput.addEventListener("input", (event) => {

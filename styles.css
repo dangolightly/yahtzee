@@ -389,6 +389,11 @@ th {
   color: var(--muted);
 }
 
+.category-version {
+  white-space: nowrap;
+  opacity: 0.9;
+}
+
 thead th:first-child,
 .category-label {
   width: 42%;

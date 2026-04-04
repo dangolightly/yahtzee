@@ -1,6 +1,6 @@
 # Yahtzee Cabin
 
-Yahtzee Cabin is a no-build Progressive Web App for two-player Yahtzee. When it is served through the bundled Node server, two online sessions can claim Player 1 and Player 2 and play from separate devices. When the multiplayer API is unavailable, it falls back to pass-and-play on one shared device and can still be installed for offline play.
+Yahtzee Cabin is a no-build Progressive Web App for two-player Yahtzee. When it is served through the bundled Node server, players enter a name, open a table, and join waiting tables from a shared lobby on separate devices. When the multiplayer API is unavailable, it falls back to pass-and-play on one shared device and can still be installed for offline play.
 
 ## Road-ready hosting
 
@@ -22,9 +22,10 @@ This means the solution still fully lives in the repo. The repo just needs to be
 - Up to three rolls per turn with hold toggles
 - Upper-section bonus at 63 points
 - Yahtzee bonus and joker rule handling
-- Online seat claiming for Player 1 and Player 2
-- Session blocking when both seats are occupied
+- Name-first online lobby with waiting tables
+- Joinable challenger queue for multiple family games
 - Automatic player timeout after 3 minutes of inactivity
+- Default-win completion when an opponent leaves or times out
 - Local persistence with `localStorage` in offline mode
 - Offline asset caching with a service worker
 
@@ -36,7 +37,7 @@ The project has no build step and no external dependencies beyond Node.js.
 npm start
 ```
 
-Then open `http://localhost:4173` on one or two devices on the same network. The first active session claims Player 1, the second claims Player 2, and any later sessions are blocked until a seat opens.
+Then open `http://localhost:4173` on one or more devices on the same network. Each player enters a name, opens a table, or joins one from the waiting list. Closing and reopening the same browser profile reconnects to the same table because the client identity is stored locally.
 
 ## Deploy from this repo
 

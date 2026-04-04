@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=25" />
+    <link rel="stylesheet" href="styles.css?v=26" />
   </head>
   <body>
     <div class="app-shell">
@@ -30,6 +30,24 @@
             <strong id="player-two-total">0</strong>
           </label>
           <button id="new-game-button" class="secondary-button compact-button" type="button">New</button>
+        </div>
+      </section>
+
+      <section id="lobby-panel" class="lobby-panel panel" hidden>
+        <div class="lobby-head">
+          <label class="name-field" for="display-name-input">
+            <span>Your name</span>
+            <input id="display-name-input" maxlength="24" autocomplete="name" />
+          </label>
+          <div class="lobby-actions">
+            <button id="create-game-button" class="primary-button compact-button" type="button">Open Table</button>
+            <button id="leave-game-button" class="secondary-button compact-button" type="button">Leave</button>
+          </div>
+        </div>
+        <p id="lobby-copy" class="lobby-copy"></p>
+        <div class="queue-section">
+          <p class="queue-heading">Open Tables</p>
+          <div id="queue-list" class="queue-list"></div>
         </div>
       </section>
 
@@ -71,6 +89,6 @@
       </button>
     </template>
 
-    <script type="module" src="app.js?v=25"></script>
+    <script type="module" src="app.js?v=26"></script>
   </body>
 </html>

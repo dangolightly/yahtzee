@@ -4,6 +4,7 @@ const path = require("path");
 
 const DEFAULT_PORT = Number(process.env.PORT || 4173);
 const SESSION_TIMEOUT_MS = 3 * 60 * 1000;
+const COMPLETED_GAME_TTL_MS = 10 * 60 * 1000;
 const root = __dirname;
 
 const categories = [
@@ -41,6 +42,9 @@ const mimeTypes = {
   ".webmanifest": "application/manifest+json; charset=utf-8",
 };
 
+const games = new Map();
+const profiles = new Map();
+
 function createPlayer(name) {
   return { name, scores: {}, yahtzeeBonus: 0 };
 }
@@ -56,15 +60,38 @@ function createGameState(playerNames = ["Player 1", "Player 2"]) {
   };
 }
 
-function createLobby() {
+function createSeat(clientId, name) {
   return {
-    slots: [null, null],
-    state: createGameState(),
-    notice: "Waiting for Player 1.",
+    clientId,
+    name,
+    lastSeen: Date.now(),
   };
 }
 
-const lobby = createLobby();
+function normalizeName(name, fallback = "Player") {
+  return String(name || "").trim().slice(0, 24) || fallback;
+}
+
+function generateGameId() {
+  return Math.random().toString(36).slice(2, 8).toUpperCase();
+}
+
+function createGame(hostClientId, hostName) {
+  const gameId = generateGameId();
+  const seat = createSeat(hostClientId, hostName);
+  const game = {
+    id: gameId,
+    status: "waiting",
+    players: [seat, null],
+    state: createGameState([hostName, "Open Seat"]),
+    notice: `${hostName} is waiting for a challenger.`,
+    createdAt: Date.now(),
+    updatedAt: Date.now(),
+    completedAt: null,
+  };
+  games.set(gameId, game);
+  return game;
+}
 
 function getCounts(dice) {
   return dice.reduce((counts, value) => {
@@ -167,12 +194,12 @@ function getPlayerTotals(player) {
   };
 }
 
-function isGameOver() {
-  return lobby.state.players.every((player) => getPlayerTotals(player).filled === categories.length);
+function isGameOver(game) {
+  return game.state.players.every((player) => getPlayerTotals(player).filled === categories.length);
 }
 
-function getWinnerSummary() {
-  const [first, second] = lobby.state.players.map(getPlayerTotals);
+function getWinnerSummary(game) {
+  const [first, second] = game.state.players.map(getPlayerTotals);
   if (first.grandTotal === second.grandTotal) {
     return {
       isTie: true,
@@ -183,176 +210,321 @@ function getWinnerSummary() {
   const winnerIndex = first.grandTotal > second.grandTotal ? 0 : 1;
   const loserIndex = winnerIndex === 0 ? 1 : 0;
   const margin = Math.abs(first.grandTotal - second.grandTotal);
-  const winnerName = lobby.state.players[winnerIndex].name;
-  const loserName = lobby.state.players[loserIndex].name;
+  const winnerName = game.state.players[winnerIndex].name;
+  const loserName = game.state.players[loserIndex].name;
   return {
     isTie: false,
     footer: `${winnerName} takes the crown by ${margin} over ${loserName}.`,
   };
 }
 
-function getSeatNames() {
-  return lobby.slots.map((slot, index) => (slot ? slot.name : `Player ${index + 1}`));
+function touchGame(game) {
+  game.updatedAt = Date.now();
 }
 
-function resetLobbyState() {
-  lobby.state = createGameState(getSeatNames());
-}
-
-function occupiedCount() {
-  return lobby.slots.filter(Boolean).length;
-}
-
-function assignedIndex(clientId) {
-  return lobby.slots.findIndex((slot) => slot && slot.clientId === clientId);
-}
-
-function phaseForLobby() {
-  if (occupiedCount() < 2) {
-    return "waiting";
-  }
-
-  return isGameOver() ? "completed" : "active";
-}
-
-function touchSlot(index) {
-  if (index >= 0 && lobby.slots[index]) {
-    lobby.slots[index].lastSeen = Date.now();
+function touchSeat(game, playerIndex) {
+  const seat = game.players[playerIndex];
+  if (seat) {
+    seat.lastSeen = Date.now();
+    touchGame(game);
   }
 }
 
-function setWaitingNotice(message) {
-  lobby.notice = message;
-}
-
-function removePlayer(index, reason) {
-  const remainingIndex = index === 0 ? 1 : 0;
-  const remaining = lobby.slots[remainingIndex];
-  lobby.slots[index] = null;
-
-  if (!remaining) {
-    resetLobbyState();
-    setWaitingNotice("Waiting for Player 1.");
-    return;
-  }
-
-  const winnerName = lobby.state.players[remainingIndex].name;
-  resetLobbyState();
-  setWaitingNotice(`${winnerName} wins by default. Waiting for another player.${reason ? ` ${reason}` : ""}`);
-}
-
-function sweepExpiredSessions() {
-  const cutoff = Date.now() - SESSION_TIMEOUT_MS;
-  lobby.slots.forEach((slot, index) => {
-    if (slot && slot.lastSeen < cutoff) {
-      removePlayer(index, "Opponent timed out.");
-    }
+function syncGameNames(game) {
+  game.state.players.forEach((player, index) => {
+    const fallback = index === 0 ? "Player 1" : game.status === "waiting" ? "Open Seat" : `Player ${index + 1}`;
+    player.name = game.players[index]?.name || player.name || fallback;
   });
 }
 
-function snapshotFor(clientId) {
-  sweepExpiredSessions();
-  const playerIndex = assignedIndex(clientId);
-  const role = playerIndex === 0 ? "player1" : playerIndex === 1 ? "player2" : occupiedCount() >= 2 ? "blocked" : "unassigned";
-  let message = "";
-
-  if (role === "blocked") {
-    message = "Two players are already in this game. Waiting for an open seat.";
-  } else if (phaseForLobby() === "waiting") {
-    message = lobby.notice;
-  } else if (isGameOver()) {
-    message = getWinnerSummary().footer;
+function findMembership(clientId) {
+  for (const game of games.values()) {
+    const playerIndex = game.players.findIndex((seat) => seat && seat.clientId === clientId);
+    if (playerIndex >= 0) {
+      return { game, playerIndex };
+    }
   }
+
+  return null;
+}
+
+function listWaitingGames(clientId) {
+  return [...games.values()]
+    .filter((game) => game.status === "waiting" && game.players[0])
+    .sort((left, right) => left.createdAt - right.createdAt)
+    .map((game) => ({
+      id: game.id,
+      hostName: game.players[0].name,
+      isMine: Boolean(game.players[0] && game.players[0].clientId === clientId),
+      createdAt: game.createdAt,
+      updatedAt: game.updatedAt,
+    }));
+}
+
+function buildLobbyMessage(clientId, membership) {
+  if (!membership) {
+    return listWaitingGames(clientId).length > 0
+      ? "Pick a name, then join an open table or open your own."
+      : "Pick a name and open a table for someone to join.";
+  }
+
+  const { game, playerIndex } = membership;
+  if (game.status === "waiting") {
+    return playerIndex === 0
+      ? `${game.players[0].name} is waiting for a challenger.`
+      : "Waiting for the table to go live.";
+  }
+
+  if (game.status === "completed") {
+    return game.notice || getWinnerSummary(game).footer;
+  }
+
+  if (isGameOver(game)) {
+    return getWinnerSummary(game).footer;
+  }
+
+  return `${game.state.players[game.state.currentPlayer].name} is up.`;
+}
+
+function buildSnapshot(clientId) {
+  sweepExpiredGames();
+  const membership = findMembership(clientId);
+  const waitingGames = listWaitingGames(clientId);
+  const profileName = profiles.get(clientId) || "";
+
+  if (!membership) {
+    return {
+      ok: true,
+      role: "unassigned",
+      playerIndex: null,
+      profileName,
+      lobby: {
+        phase: "lobby",
+        message: buildLobbyMessage(clientId, null),
+        timeoutMs: SESSION_TIMEOUT_MS,
+        waitingGames,
+        currentGameId: null,
+      },
+      game: null,
+      state: createGameState(),
+    };
+  }
+
+  const { game, playerIndex } = membership;
+  touchSeat(game, playerIndex);
+  syncGameNames(game);
 
   return {
     ok: true,
-    role,
-    playerIndex: playerIndex >= 0 ? playerIndex : null,
+    role: playerIndex === 0 ? "player1" : "player2",
+    playerIndex,
+    profileName: profileName || game.players[playerIndex]?.name || "",
     lobby: {
-      phase: phaseForLobby(),
-      occupied: occupiedCount(),
-      message,
+      phase: game.status,
+      message: buildLobbyMessage(clientId, membership),
       timeoutMs: SESSION_TIMEOUT_MS,
+      waitingGames,
+      currentGameId: game.id,
     },
-    state: lobby.state,
+    game: {
+      id: game.id,
+      status: game.status,
+      players: game.state.players.map((player, index) => ({
+        name: player.name,
+        connected: Boolean(game.players[index]),
+      })),
+    },
+    state: game.state,
   };
 }
 
-function claimSeat(clientId) {
-  sweepExpiredSessions();
-
-  let index = assignedIndex(clientId);
-  if (index >= 0) {
-    touchSlot(index);
-    return snapshotFor(clientId);
+function cleanupCompletedGames() {
+  const cutoff = Date.now() - COMPLETED_GAME_TTL_MS;
+  for (const [gameId, game] of games.entries()) {
+    if (game.status === "completed" && game.completedAt && game.completedAt < cutoff) {
+      games.delete(gameId);
+    }
   }
-
-  index = lobby.slots.findIndex((slot) => !slot);
-  if (index === -1) {
-    return snapshotFor(clientId);
-  }
-
-  lobby.slots[index] = {
-    clientId,
-    name: lobby.state.players[index]?.name || `Player ${index + 1}`,
-    lastSeen: Date.now(),
-  };
-  lobby.state.players[index].name = lobby.slots[index].name;
-
-  if (occupiedCount() === 2) {
-    resetLobbyState();
-    setWaitingNotice("");
-  } else {
-    resetLobbyState();
-    setWaitingNotice(`Waiting for Player ${index === 0 ? 2 : 1}.`);
-  }
-
-  return snapshotFor(clientId);
 }
 
-function renamePlayer(clientId, name) {
-  const index = assignedIndex(clientId);
-  if (index === -1) {
-    return false;
+function concludeByDefault(game, playerIndex, reason) {
+  const otherIndex = playerIndex === 0 ? 1 : 0;
+  const otherSeat = game.players[otherIndex];
+  const leaverName = game.state.players[playerIndex].name;
+
+  game.players[playerIndex] = null;
+
+  if (!otherSeat) {
+    games.delete(game.id);
+    return;
   }
 
-  const nextName = String(name || "").trim().slice(0, 24) || `Player ${index + 1}`;
-  lobby.slots[index].name = nextName;
-  lobby.state.players[index].name = nextName;
-  if (phaseForLobby() === "waiting") {
-    setWaitingNotice(`Waiting for Player ${index === 0 ? 2 : 1}.`);
+  const winnerName = game.state.players[otherIndex].name;
+  game.status = "completed";
+  game.completedAt = Date.now();
+  game.notice = `${winnerName} wins by default. ${leaverName} ${reason}.`;
+  touchGame(game);
+}
+
+function sweepExpiredGames() {
+  const cutoff = Date.now() - SESSION_TIMEOUT_MS;
+
+  for (const [gameId, game] of games.entries()) {
+    if (game.status === "completed") {
+      game.players = game.players.map((seat) => (seat && seat.lastSeen >= cutoff ? seat : null));
+      if (!game.players[0] && !game.players[1]) {
+        games.delete(gameId);
+      }
+      continue;
+    }
+
+    if (game.status === "waiting") {
+      if (!game.players[0] || game.players[0].lastSeen < cutoff) {
+        games.delete(gameId);
+      }
+      continue;
+    }
+
+    game.players.forEach((seat, index) => {
+      if (seat && seat.lastSeen < cutoff && game.status === "active") {
+        concludeByDefault(game, index, "timed out");
+      }
+    });
   }
-  touchSlot(index);
-  return true;
+
+  cleanupCompletedGames();
+}
+
+function ensureAvailable(clientId) {
+  const membership = findMembership(clientId);
+  if (!membership) {
+    return null;
+  }
+
+  if (membership.game.status === "completed") {
+    membership.game.players[membership.playerIndex] = null;
+    if (!membership.game.players[0] && !membership.game.players[1]) {
+      games.delete(membership.game.id);
+    }
+    return null;
+  }
+
+  return membership;
+}
+
+function createLobbyGame(clientId, name) {
+  sweepExpiredGames();
+  if (ensureAvailable(clientId)) {
+    return { ok: false, error: "Leave your current table before opening a new one.", snapshot: buildSnapshot(clientId) };
+  }
+
+  const nextName = normalizeName(name, "Player 1");
+  profiles.set(clientId, nextName);
+  createGame(clientId, nextName);
+  return { ok: true, snapshot: buildSnapshot(clientId) };
+}
+
+function joinLobbyGame(clientId, gameId, name) {
+  sweepExpiredGames();
+  if (ensureAvailable(clientId)) {
+    return { ok: false, error: "Leave your current table before joining another.", snapshot: buildSnapshot(clientId) };
+  }
+
+  const game = games.get(gameId);
+  if (!game || game.status !== "waiting" || !game.players[0] || game.players[1]) {
+    return { ok: false, error: "That table is no longer available.", snapshot: buildSnapshot(clientId) };
+  }
+
+  const nextName = normalizeName(name, "Player 2");
+  profiles.set(clientId, nextName);
+  game.players[1] = createSeat(clientId, nextName);
+  game.status = "active";
+  game.notice = "";
+  game.completedAt = null;
+  game.state = createGameState([game.players[0].name, game.players[1].name]);
+  touchGame(game);
+  return { ok: true, snapshot: buildSnapshot(clientId) };
+}
+
+function leaveCurrentGame(clientId) {
+  sweepExpiredGames();
+  const membership = findMembership(clientId);
+  if (!membership) {
+    return { ok: true, snapshot: buildSnapshot(clientId) };
+  }
+
+  const { game, playerIndex } = membership;
+  if (game.status === "waiting") {
+    games.delete(game.id);
+    return { ok: true, snapshot: buildSnapshot(clientId) };
+  }
+
+  if (game.status === "completed") {
+    game.players[playerIndex] = null;
+    if (!game.players[0] && !game.players[1]) {
+      games.delete(game.id);
+    }
+    return { ok: true, snapshot: buildSnapshot(clientId) };
+  }
+
+  concludeByDefault(game, playerIndex, "left the table");
+  return { ok: true, snapshot: buildSnapshot(clientId) };
+}
+
+function updateProfile(clientId, name) {
+  const nextName = normalizeName(name, "Player");
+  profiles.set(clientId, nextName);
+
+  const membership = findMembership(clientId);
+  if (membership) {
+    membership.game.players[membership.playerIndex].name = nextName;
+    membership.game.state.players[membership.playerIndex].name = nextName;
+    if (membership.game.status === "waiting") {
+      membership.game.notice = `${nextName} is waiting for a challenger.`;
+    }
+    touchSeat(membership.game, membership.playerIndex);
+  }
+
+  return buildSnapshot(clientId);
+}
+
+function ensureActiveTurn(clientId) {
+  const membership = findMembership(clientId);
+  if (!membership) {
+    return null;
+  }
+
+  const { game, playerIndex } = membership;
+  if (game.status !== "active" || playerIndex !== game.state.currentPlayer || isGameOver(game)) {
+    return null;
+  }
+
+  touchSeat(game, playerIndex);
+  return membership;
 }
 
 function randomDie() {
   return Math.floor(Math.random() * 6) + 1;
 }
 
-function ensureActiveTurn(clientId) {
-  const index = assignedIndex(clientId);
-  if (index === -1 || phaseForLobby() !== "active" || index !== lobby.state.currentPlayer || isGameOver()) {
-    return false;
-  }
-
-  touchSlot(index);
-  return true;
-}
-
 function rollFor(clientId) {
-  if (!ensureActiveTurn(clientId) || lobby.state.rollsLeft === 0) {
+  const membership = ensureActiveTurn(clientId);
+  if (!membership || membership.game.state.rollsLeft === 0) {
     return false;
   }
 
-  lobby.state.dice = lobby.state.dice.map((value, index) => (lobby.state.held[index] ? value : randomDie()));
-  lobby.state.rollsLeft -= 1;
-  lobby.state.turnStarted = true;
+  membership.game.state.dice = membership.game.state.dice.map((value, index) => (
+    membership.game.state.held[index] ? value : randomDie()
+  ));
+  membership.game.state.rollsLeft -= 1;
+  membership.game.state.turnStarted = true;
+  touchGame(membership.game);
   return true;
 }
 
 function toggleHoldFor(clientId, index) {
-  if (!ensureActiveTurn(clientId) || !lobby.state.turnStarted || lobby.state.rollsLeft === 3) {
+  const membership = ensureActiveTurn(clientId);
+  if (!membership || !membership.game.state.turnStarted || membership.game.state.rollsLeft === 3) {
     return false;
   }
 
@@ -360,44 +532,63 @@ function toggleHoldFor(clientId, index) {
     return false;
   }
 
-  lobby.state.held[index] = !lobby.state.held[index];
+  membership.game.state.held[index] = !membership.game.state.held[index];
+  touchGame(membership.game);
   return true;
 }
 
-function advanceTurn() {
-  lobby.state.currentPlayer = lobby.state.currentPlayer === 0 ? 1 : 0;
-  lobby.state.dice = [1, 1, 1, 1, 1];
-  lobby.state.held = [false, false, false, false, false];
-  lobby.state.rollsLeft = 3;
-  lobby.state.turnStarted = false;
+function advanceTurn(game) {
+  game.state.currentPlayer = game.state.currentPlayer === 0 ? 1 : 0;
+  game.state.dice = [1, 1, 1, 1, 1];
+  game.state.held = [false, false, false, false, false];
+  game.state.rollsLeft = 3;
+  game.state.turnStarted = false;
 }
 
 function takeScoreFor(clientId, categoryKey) {
-  if (!ensureActiveTurn(clientId) || !lobby.state.turnStarted) {
+  const membership = ensureActiveTurn(clientId);
+  if (!membership || !membership.game.state.turnStarted) {
     return false;
   }
 
-  const player = lobby.state.players[lobby.state.currentPlayer];
-  if (categoryKey in player.scores || !getOpenCategories(player, lobby.state.dice).some((category) => category.key === categoryKey)) {
+  const game = membership.game;
+  const player = game.state.players[game.state.currentPlayer];
+  if (categoryKey in player.scores || !getOpenCategories(player, game.state.dice).some((category) => category.key === categoryKey)) {
     return false;
   }
 
-  if (isBonusYahtzeeEligible(player, lobby.state.dice)) {
+  if (isBonusYahtzeeEligible(player, game.state.dice)) {
     player.yahtzeeBonus += 1;
   }
 
-  player.scores[categoryKey] = scoreCategory(categoryKey, lobby.state.dice, player);
-  advanceTurn();
+  player.scores[categoryKey] = scoreCategory(categoryKey, game.state.dice, player);
+  advanceTurn(game);
+  touchGame(game);
+  if (isGameOver(game)) {
+    game.status = "completed";
+    game.completedAt = Date.now();
+    game.notice = getWinnerSummary(game).footer;
+  }
   return true;
 }
 
-function resetForCurrentSeats() {
-  resetLobbyState();
-  if (occupiedCount() < 2) {
-    setWaitingNotice(`Waiting for Player ${lobby.slots[0] ? 2 : 1}.`);
-  } else {
-    setWaitingNotice("");
+function resetCurrentGame(clientId) {
+  const membership = findMembership(clientId);
+  if (!membership) {
+    return false;
   }
+
+  const { game } = membership;
+  if (!game.players[0] || !game.players[1]) {
+    return false;
+  }
+
+  game.state = createGameState([game.players[0].name, game.players[1].name]);
+  game.status = "active";
+  game.notice = "";
+  game.completedAt = null;
+  touchGame(game);
+  return true;
 }
 
 function sendJson(response, statusCode, payload) {
@@ -436,29 +627,108 @@ function parseJson(request) {
 
 async function handleApi(request, response, url) {
   if (request.method === "GET" && url.pathname === "/api/session") {
-    const clientId = url.searchParams.get("clientId");
+    const clientId = String(url.searchParams.get("clientId") || "");
     if (!clientId) {
       sendJson(response, 400, { ok: false, error: "Missing clientId" });
       return true;
     }
 
-    const index = assignedIndex(clientId);
-    if (index >= 0) {
-      touchSlot(index);
-    }
-    sendJson(response, 200, snapshotFor(clientId));
+    sendJson(response, 200, buildSnapshot(clientId));
     return true;
   }
 
   if (request.method === "POST" && url.pathname === "/api/session/claim") {
     try {
       const body = await parseJson(request);
-      if (!body.clientId) {
+      const clientId = String(body.clientId || "");
+      if (!clientId) {
         sendJson(response, 400, { ok: false, error: "Missing clientId" });
         return true;
       }
 
-      sendJson(response, 200, claimSeat(String(body.clientId)));
+      sendJson(response, 200, buildSnapshot(clientId));
+      return true;
+    } catch (error) {
+      sendJson(response, 400, { ok: false, error: error.message });
+      return true;
+    }
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/profile") {
+    try {
+      const body = await parseJson(request);
+      const clientId = String(body.clientId || "");
+      if (!clientId) {
+        sendJson(response, 400, { ok: false, error: "Missing clientId" });
+        return true;
+      }
+
+      sendJson(response, 200, updateProfile(clientId, body.name));
+      return true;
+    } catch (error) {
+      sendJson(response, 400, { ok: false, error: error.message });
+      return true;
+    }
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/lobby/create") {
+    try {
+      const body = await parseJson(request);
+      const clientId = String(body.clientId || "");
+      if (!clientId) {
+        sendJson(response, 400, { ok: false, error: "Missing clientId" });
+        return true;
+      }
+
+      const result = createLobbyGame(clientId, body.name || profiles.get(clientId));
+      if (!result.ok) {
+        sendJson(response, 409, result);
+        return true;
+      }
+
+      sendJson(response, 200, result.snapshot);
+      return true;
+    } catch (error) {
+      sendJson(response, 400, { ok: false, error: error.message });
+      return true;
+    }
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/lobby/join") {
+    try {
+      const body = await parseJson(request);
+      const clientId = String(body.clientId || "");
+      const gameId = String(body.gameId || "").toUpperCase();
+      if (!clientId || !gameId) {
+        sendJson(response, 400, { ok: false, error: "Missing join payload" });
+        return true;
+      }
+
+      const result = joinLobbyGame(clientId, gameId, body.name || profiles.get(clientId));
+      if (!result.ok) {
+        sendJson(response, 409, result);
+        return true;
+      }
+
+      sendJson(response, 200, result.snapshot);
+      return true;
+    } catch (error) {
+      sendJson(response, 400, { ok: false, error: error.message });
+      return true;
+    }
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/lobby/leave") {
+    try {
+      const body = await parseJson(request);
+      const clientId = String(body.clientId || "");
+      if (!clientId) {
+        sendJson(response, 400, { ok: false, error: "Missing clientId" });
+        return true;
+      }
+
+      const result = leaveCurrentGame(clientId);
+      sendJson(response, 200, result.snapshot);
       return true;
     } catch (error) {
       sendJson(response, 400, { ok: false, error: error.message });
@@ -477,28 +747,22 @@ async function handleApi(request, response, url) {
       }
 
       let success = false;
-      if (type === "rename") {
-        success = renamePlayer(clientId, body.name);
-      } else if (type === "roll") {
+      if (type === "roll") {
         success = rollFor(clientId);
       } else if (type === "toggleHold") {
         success = toggleHoldFor(clientId, Number(body.index));
       } else if (type === "takeScore") {
         success = takeScoreFor(clientId, String(body.categoryKey || ""));
       } else if (type === "newGame") {
-        if (assignedIndex(clientId) !== -1) {
-          touchSlot(assignedIndex(clientId));
-          resetForCurrentSeats();
-          success = true;
-        }
+        success = resetCurrentGame(clientId);
       }
 
       if (!success) {
-        sendJson(response, 409, { ok: false, error: "Action rejected", snapshot: snapshotFor(clientId) });
+        sendJson(response, 409, { ok: false, error: "Action rejected", snapshot: buildSnapshot(clientId) });
         return true;
       }
 
-      sendJson(response, 200, snapshotFor(clientId));
+      sendJson(response, 200, buildSnapshot(clientId));
       return true;
     } catch (error) {
       sendJson(response, 400, { ok: false, error: error.message });
@@ -507,7 +771,11 @@ async function handleApi(request, response, url) {
   }
 
   if (request.method === "GET" && url.pathname === "/api/health") {
-    sendJson(response, 200, { ok: true, mode: "online", occupied: occupiedCount() });
+    sendJson(response, 200, {
+      ok: true,
+      waitingGames: listWaitingGames("").length,
+      totalGames: games.size,
+    });
     return true;
   }
 
@@ -576,6 +844,6 @@ function startServer(port) {
   });
 }
 
-setInterval(sweepExpiredSessions, 15_000).unref();
+setInterval(sweepExpiredGames, 15_000).unref();
 
 startServer(DEFAULT_PORT);

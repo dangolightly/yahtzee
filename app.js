@@ -1,5 +1,6 @@
 const STORAGE_KEY = "yahtzee-state-v2";
-const CLIENT_ID_KEY = "yahtzee-client-id-v1";
+const CLIENT_ID_KEY = "yahtzee-client-id-v2";
+const PROFILE_NAME_KEY = "yahtzee-profile-name-v1";
 const SESSION_POLL_MS = 4000;
 
 const categories = [
@@ -41,6 +42,12 @@ const els = {
   playerTwoHeading: document.querySelector("#player-two-heading"),
   newGameButton: document.querySelector("#new-game-button"),
   rollButton: document.querySelector("#roll-button"),
+  lobbyPanel: document.querySelector("#lobby-panel"),
+  displayNameInput: document.querySelector("#display-name-input"),
+  createGameButton: document.querySelector("#create-game-button"),
+  leaveGameButton: document.querySelector("#leave-game-button"),
+  lobbyCopy: document.querySelector("#lobby-copy"),
+  queueList: document.querySelector("#queue-list"),
   sessionBanner: document.querySelector("#session-banner"),
   installWarning: document.querySelector("#install-warning"),
   winnerBanner: document.querySelector("#winner-banner"),
@@ -131,20 +138,35 @@ function saveState() {
 }
 
 function getOrCreateClientId() {
-  const existing = window.sessionStorage.getItem(CLIENT_ID_KEY);
+  const existing = window.localStorage.getItem(CLIENT_ID_KEY);
   if (existing) {
     return existing;
   }
 
   const nextId = window.crypto?.randomUUID ? window.crypto.randomUUID() : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  window.sessionStorage.setItem(CLIENT_ID_KEY, nextId);
+  window.localStorage.setItem(CLIENT_ID_KEY, nextId);
   return nextId;
+}
+
+function loadProfileName() {
+  return String(window.localStorage.getItem(PROFILE_NAME_KEY) || "").slice(0, 24);
+}
+
+function saveProfileName(name) {
+  window.localStorage.setItem(PROFILE_NAME_KEY, String(name || "").slice(0, 24));
+}
+
+function updateInputValue(element, value) {
+  if (document.activeElement !== element) {
+    element.value = value;
+  }
 }
 
 let state = loadState();
 
 const session = {
   clientId: getOrCreateClientId(),
+  profileName: loadProfileName(),
   mode: "offline",
   role: null,
   playerIndex: null,
@@ -152,6 +174,8 @@ const session = {
   notice: "",
   pollHandle: null,
   reconnecting: false,
+  waitingGames: [],
+  currentGameId: null,
 };
 
 function getCounts(dice) {
@@ -294,11 +318,7 @@ function isOnlineMode() {
 }
 
 function canCurrentClientAct() {
-  return !isOnlineMode() || (session.playerIndex === state.currentPlayer && session.phase === "active" && session.role !== "blocked");
-}
-
-function canCurrentClientRename(playerIndex) {
-  return !isOnlineMode() || session.playerIndex === playerIndex;
+  return !isOnlineMode() || (session.playerIndex === state.currentPlayer && session.phase === "active");
 }
 
 function renderNotice() {
@@ -319,6 +339,51 @@ function renderNotice() {
     els.installWarning.hidden = true;
     els.installWarning.textContent = "";
   }
+}
+
+function renderLobby() {
+  if (!isOnlineMode()) {
+    els.lobbyPanel.hidden = true;
+    els.queueList.innerHTML = "";
+    return;
+  }
+
+  els.lobbyPanel.hidden = false;
+  updateInputValue(els.displayNameInput, session.profileName);
+
+  const hasName = Boolean(session.profileName.trim());
+  els.createGameButton.disabled = !hasName || session.role !== "unassigned";
+  els.leaveGameButton.hidden = session.role === "unassigned";
+  els.leaveGameButton.disabled = session.role === "unassigned";
+
+  if (session.phase === "lobby") {
+    els.lobbyCopy.textContent = "Pick a name, open a table, or join a waiting challenger queue below.";
+  } else if (session.phase === "waiting") {
+    els.lobbyCopy.textContent = `${state.players[0].name} is waiting for a challenger at table ${session.currentGameId}.`;
+  } else if (session.phase === "active") {
+    els.lobbyCopy.textContent = `Table ${session.currentGameId} is live: ${state.players[0].name} vs ${state.players[1].name}.`;
+  } else if (session.phase === "completed") {
+    els.lobbyCopy.textContent = session.notice || `Table ${session.currentGameId} is complete.`;
+  } else {
+    els.lobbyCopy.textContent = session.notice || "Connecting to the live lobby...";
+  }
+
+  if (session.waitingGames.length === 0) {
+    els.queueList.innerHTML = '<p class="queue-empty">No open tables right now.</p>';
+    return;
+  }
+
+  els.queueList.innerHTML = session.waitingGames.map((game) => `
+    <div class="queue-card${game.isMine ? " is-mine" : ""}">
+      <div>
+        <strong>${game.hostName}</strong>
+        <span>Table ${game.id}</span>
+      </div>
+      <button class="secondary-button compact-button" type="button" data-join-game="${game.id}" ${(!hasName || session.role !== "unassigned" || game.isMine) ? "disabled" : ""}>
+        ${game.isMine ? "Your Table" : "Join"}
+      </button>
+    </div>
+  `).join("");
 }
 
 function renderDice() {
@@ -427,9 +492,10 @@ function renderStatus() {
   const totals = state.players.map(getPlayerTotals);
   const ownedSeat = isOnlineMode() ? session.playerIndex : null;
   const turnSeat = state.currentPlayer + 1;
+  const online = isOnlineMode();
 
-  els.playerOneInput.value = state.players[0].name;
-  els.playerTwoInput.value = state.players[1].name;
+  updateInputValue(els.playerOneInput, state.players[0].name);
+  updateInputValue(els.playerTwoInput, state.players[1].name);
   els.playerOneHeading.textContent = `${state.players[0].name} (${totals[0].grandTotal})`;
   els.playerTwoHeading.textContent = `${state.players[1].name} (${totals[1].grandTotal})`;
   els.playerOneTotal.textContent = String(totals[0].grandTotal);
@@ -441,22 +507,18 @@ function renderStatus() {
   els.playerOneSeatTag.hidden = ownedSeat !== 0;
   els.playerTwoSeatTag.hidden = ownedSeat !== 1;
 
-  els.playerOneInput.disabled = !canCurrentClientRename(0);
-  els.playerTwoInput.disabled = !canCurrentClientRename(1);
-  els.newGameButton.disabled = isOnlineMode() && session.role === "blocked";
+  els.playerOneInput.disabled = online;
+  els.playerTwoInput.disabled = online;
+  els.newGameButton.disabled = online ? !(session.phase === "active" || session.phase === "completed") : false;
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
   els.rollButton.textContent = `Roll (${isGameOver() ? 0 : state.rollsLeft})`;
 
-  if (isOnlineMode()) {
+  if (online) {
     let bannerText = "";
-    if (session.role === "player1") {
-      bannerText = `You are Player 1. Turn: Player ${turnSeat}.`;
-    } else if (session.role === "player2") {
-      bannerText = `You are Player 2. Turn: Player ${turnSeat}.`;
-    } else if (session.role === "blocked") {
-      bannerText = "You are not seated in this game. Both player seats are occupied.";
+    if (session.role === "player1" || session.role === "player2") {
+      bannerText = `You are ${state.players[session.playerIndex].name} at table ${session.currentGameId}. Turn: Player ${turnSeat}.`;
     } else {
-      bannerText = "Connecting to the live game...";
+      bannerText = session.reconnecting ? "Trying to reconnect to the live lobby..." : (session.notice || "Connecting to the live lobby...");
     }
 
     els.sessionBanner.hidden = false;
@@ -487,6 +549,7 @@ function renderStatus() {
 }
 
 function render() {
+  renderLobby();
   renderStatus();
   renderDice();
   renderScoreboard();
@@ -583,9 +646,15 @@ function applyOnlineSnapshot(snapshot) {
   session.mode = "online";
   session.role = snapshot.role;
   session.playerIndex = snapshot.playerIndex;
-  session.phase = snapshot.lobby?.phase || "waiting";
+  session.phase = snapshot.lobby?.phase || "lobby";
   session.notice = snapshot.lobby?.message || "";
   session.reconnecting = false;
+  session.waitingGames = snapshot.lobby?.waitingGames || [];
+  session.currentGameId = snapshot.game?.id || snapshot.lobby?.currentGameId || null;
+  if (typeof snapshot.profileName === "string") {
+    session.profileName = snapshot.profileName.slice(0, 24);
+    saveProfileName(session.profileName);
+  }
   state = normalizeState(snapshot.state);
   render();
 }
@@ -598,28 +667,79 @@ function startSessionPolling() {
   session.pollHandle = window.setInterval(() => {
     syncOnlineState().catch(() => {
       session.reconnecting = true;
-      session.notice = "Trying to reconnect to the live game...";
+      session.notice = "Trying to reconnect to the live lobby...";
       render();
     });
   }, SESSION_POLL_MS);
 }
 
-async function claimOrRefreshSeat() {
-  return fetchJson("/api/session/claim", {
-    method: "POST",
-    body: JSON.stringify({ clientId: session.clientId }),
-  });
+async function syncOnlineState() {
+  const snapshot = await fetchJson(`/api/session?clientId=${encodeURIComponent(session.clientId)}`);
+  applyOnlineSnapshot(snapshot);
 }
 
-async function syncOnlineState() {
+async function submitProfileUpdate() {
   if (!isOnlineMode()) {
     return;
   }
 
-  const snapshot = session.role === "blocked" || session.playerIndex === null
-    ? await claimOrRefreshSeat()
-    : await fetchJson(`/api/session?clientId=${encodeURIComponent(session.clientId)}`);
-  applyOnlineSnapshot(snapshot);
+  try {
+    const snapshot = await fetchJson("/api/profile", {
+      method: "POST",
+      body: JSON.stringify({ clientId: session.clientId, name: session.profileName }),
+    });
+    applyOnlineSnapshot(snapshot);
+  } catch (error) {
+    session.notice = error.message || "Could not update your name.";
+    render();
+  }
+}
+
+async function createOnlineGame() {
+  try {
+    const snapshot = await fetchJson("/api/lobby/create", {
+      method: "POST",
+      body: JSON.stringify({ clientId: session.clientId, name: session.profileName }),
+    });
+    applyOnlineSnapshot(snapshot);
+  } catch (error) {
+    if (error.payload?.snapshot) {
+      applyOnlineSnapshot(error.payload.snapshot);
+    } else {
+      session.notice = error.message || "Could not open a table.";
+      render();
+    }
+  }
+}
+
+async function joinOnlineGame(gameId) {
+  try {
+    const snapshot = await fetchJson("/api/lobby/join", {
+      method: "POST",
+      body: JSON.stringify({ clientId: session.clientId, gameId, name: session.profileName }),
+    });
+    applyOnlineSnapshot(snapshot);
+  } catch (error) {
+    if (error.payload?.snapshot) {
+      applyOnlineSnapshot(error.payload.snapshot);
+    } else {
+      session.notice = error.message || "Could not join that table.";
+      render();
+    }
+  }
+}
+
+async function leaveOnlineGame() {
+  try {
+    const snapshot = await fetchJson("/api/lobby/leave", {
+      method: "POST",
+      body: JSON.stringify({ clientId: session.clientId }),
+    });
+    applyOnlineSnapshot(snapshot);
+  } catch (error) {
+    session.notice = error.message || "Could not leave the table.";
+    render();
+  }
 }
 
 async function submitOnlineAction(type, payload = {}) {
@@ -641,7 +761,7 @@ async function submitOnlineAction(type, payload = {}) {
 
 async function tryEnableOnlineMode() {
   try {
-    const snapshot = await claimOrRefreshSeat();
+    const snapshot = await fetchJson(`/api/session?clientId=${encodeURIComponent(session.clientId)}`);
     applyOnlineSnapshot(snapshot);
     startSessionPolling();
   } catch {
@@ -650,6 +770,8 @@ async function tryEnableOnlineMode() {
     session.playerIndex = null;
     session.phase = "offline";
     session.notice = "";
+    session.waitingGames = [];
+    session.currentGameId = null;
     render();
   }
 }
@@ -672,22 +794,40 @@ els.newGameButton.addEventListener("click", () => {
   resetGameLocal();
 });
 
-els.playerOneInput.addEventListener("change", (event) => {
-  if (isOnlineMode()) {
-    submitOnlineAction("rename", { name: event.target.value });
-    return;
+els.createGameButton.addEventListener("click", () => {
+  if (session.profileName.trim()) {
+    createOnlineGame();
   }
+});
 
-  updatePlayerNameLocal(0, event.target.value);
+els.leaveGameButton.addEventListener("click", () => {
+  leaveOnlineGame();
+});
+
+els.displayNameInput.addEventListener("input", (event) => {
+  session.profileName = String(event.target.value || "").slice(0, 24);
+  saveProfileName(session.profileName);
+  render();
+});
+
+els.displayNameInput.addEventListener("change", () => {
+  submitProfileUpdate();
+});
+
+els.displayNameInput.addEventListener("blur", () => {
+  submitProfileUpdate();
+});
+
+els.playerOneInput.addEventListener("change", (event) => {
+  if (!isOnlineMode()) {
+    updatePlayerNameLocal(0, event.target.value);
+  }
 });
 
 els.playerTwoInput.addEventListener("change", (event) => {
-  if (isOnlineMode()) {
-    submitOnlineAction("rename", { name: event.target.value });
-    return;
+  if (!isOnlineMode()) {
+    updatePlayerNameLocal(1, event.target.value);
   }
-
-  updatePlayerNameLocal(1, event.target.value);
 });
 
 els.playerOneInput.addEventListener("blur", (event) => {
@@ -700,6 +840,15 @@ els.playerTwoInput.addEventListener("blur", (event) => {
   if (!isOnlineMode()) {
     updatePlayerNameLocal(1, event.target.value);
   }
+});
+
+els.queueList.addEventListener("click", (event) => {
+  const button = event.target.closest("[data-join-game]");
+  if (!button || button.disabled) {
+    return;
+  }
+
+  joinOnlineGame(button.dataset.joinGame);
 });
 
 els.diceGrid.addEventListener("click", (event) => {
@@ -733,7 +882,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=25").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=26").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

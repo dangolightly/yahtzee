@@ -2,6 +2,8 @@ const STORAGE_KEY = "yahtzee-state-v2";
 const CLIENT_ID_KEY = "yahtzee-client-id-v2";
 const PROFILE_NAME_KEY = "yahtzee-profile-name-v1";
 const TUTORIAL_DONE_KEY = "yahtzee-tutorial-done-v1";
+const FUN_MODE_KEY = "yahtzee-fun-mode-v1";
+const FUN_CONFIG_URL = "./yahtzee-fun-config.json";
 const SESSION_POLL_MS = 4000;
 
 const categories = [
@@ -40,11 +42,15 @@ const els = {
   playerOneHeading: document.querySelector("#player-one-heading"),
   playerTwoHeading: document.querySelector("#player-two-heading"),
   newGameButton: document.querySelector("#new-game-button"),
+  funToggleButton: document.querySelector("#fun-toggle-button"),
   rollButton: document.querySelector("#roll-button"),
   lobbyPanel: document.querySelector("#lobby-panel"),
   lobbyCopy: document.querySelector("#lobby-copy"),
   queueSection: document.querySelector("#queue-section"),
   queueList: document.querySelector("#queue-list"),
+  funFlash: document.querySelector("#fun-flash"),
+  funFlashIndicator: document.querySelector("#fun-flash-indicator"),
+  funFlashText: document.querySelector("#fun-flash-text"),
   tutorialOverlay: document.querySelector("#tutorial-overlay"),
   tutorialBubble: document.querySelector("#tutorial-bubble"),
   tutorialStep: document.querySelector("#tutorial-step"),
@@ -234,9 +240,15 @@ const tutorial = {
   stepIndex: 0,
 };
 
+const funMode = {
+  enabled: readLocalValue(FUN_MODE_KEY) !== "0",
+  config: null,
+};
+
 let completedResetHandle = null;
 let completedResetPending = false;
 let highlightedTutorialTarget = null;
+let funFlashHandle = null;
 
 function getCounts(dice) {
   return dice.reduce((counts, value) => {
@@ -636,6 +648,7 @@ function renderStatus() {
   els.playerOneInput.disabled = online && accepted;
   els.playerTwoInput.disabled = online;
   els.newGameButton.disabled = online ? !(session.phase === "active" || session.phase === "completed") : false;
+  renderFunToggle();
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
   els.rollButton.classList.toggle("is-your-turn", isMyTurn);
   els.rollButton.classList.toggle("is-their-turn", isOnlineActiveTurn && !isMyTurn);
@@ -678,6 +691,105 @@ function renderStatus() {
     els.winnerConfetti.textContent = "🎉 ✨ 🎉";
     els.winnerTitle.textContent = "Winner";
     els.winnerCopy.textContent = "";
+  }
+}
+
+function clearFunFlash() {
+  if (funFlashHandle) {
+    window.clearTimeout(funFlashHandle);
+    funFlashHandle = null;
+  }
+
+  if (!els.funFlash) {
+    return;
+  }
+
+  els.funFlash.hidden = true;
+  els.funFlash.className = "fun-flash";
+}
+
+function getFunIndicator(indicatorId) {
+  const fallback = { id: "spark", label: "Party mode", emoji: "🎲" };
+  const indicators = funMode.config?.displayIndicators;
+  if (!Array.isArray(indicators) || indicators.length === 0) {
+    return fallback;
+  }
+
+  return indicators.find((indicator) => indicator.id === indicatorId) || indicators[0] || fallback;
+}
+
+function triggerFunMoment(categoryKey) {
+  if (!funMode.enabled || !funMode.config || !els.funFlash) {
+    return;
+  }
+
+  const choices = funMode.config?.scores?.[categoryKey];
+  if (!Array.isArray(choices) || choices.length === 0) {
+    return;
+  }
+
+  const choice = choices[Math.floor(Math.random() * choices.length)];
+  const line = String(choice?.text || "").trim();
+  if (!line) {
+    return;
+  }
+
+  const indicator = getFunIndicator(choice?.indicator);
+  const indicatorLabel = String(indicator?.label || "Party mode");
+  const indicatorEmoji = String(indicator?.emoji || "🎲");
+  const indicatorId = String(indicator?.id || "spark");
+
+  if (els.funFlashIndicator) {
+    els.funFlashIndicator.textContent = `${indicatorEmoji} ${indicatorLabel}`;
+  }
+  if (els.funFlashText) {
+    els.funFlashText.textContent = line;
+  }
+
+  els.funFlash.hidden = false;
+  els.funFlash.className = `fun-flash is-visible indicator-${indicatorId}`;
+
+  if (funFlashHandle) {
+    window.clearTimeout(funFlashHandle);
+  }
+  funFlashHandle = window.setTimeout(() => {
+    clearFunFlash();
+  }, 2800);
+}
+
+function renderFunToggle() {
+  if (!els.funToggleButton) {
+    return;
+  }
+
+  els.funToggleButton.textContent = funMode.enabled ? "Fun On" : "Fun Off";
+  els.funToggleButton.setAttribute("aria-pressed", funMode.enabled ? "true" : "false");
+  els.funToggleButton.classList.toggle("is-on", funMode.enabled);
+  els.funToggleButton.classList.toggle("is-off", !funMode.enabled);
+
+  if (!funMode.enabled) {
+    clearFunFlash();
+  }
+}
+
+async function loadFunConfig() {
+  try {
+    const response = await fetch(FUN_CONFIG_URL, { cache: "no-store" });
+    if (!response.ok) {
+      throw new Error("Fun config not available");
+    }
+
+    const payload = await response.json();
+    if (!payload || typeof payload !== "object") {
+      throw new Error("Invalid fun config");
+    }
+
+    funMode.config = payload;
+  } catch {
+    funMode.config = {
+      displayIndicators: [{ id: "spark", label: "Party mode", emoji: "🎲" }],
+      scores: {},
+    };
   }
 }
 
@@ -834,6 +946,7 @@ function takeScoreLocal(categoryKey) {
     player.yahtzeeBonus += 1;
   }
 
+  triggerFunMoment(categoryKey);
   player.scores[categoryKey] = scoreCategory(categoryKey, state.dice, player);
   advanceTurnLocal();
   render();
@@ -959,13 +1072,20 @@ async function joinOnlineGame(gameId) {
   }
 }
 
-async function submitOnlineAction(type, payload = {}) {
+async function submitOnlineAction(type, payload = {}, options = {}) {
   try {
     const snapshot = await fetchJson("/api/action", {
       method: "POST",
       body: JSON.stringify({ clientId: session.clientId, type, ...payload }),
     });
     applyOnlineSnapshot(snapshot);
+    if (typeof options.onSuccess === "function") {
+      try {
+        options.onSuccess();
+      } catch {
+        // Presentation-only callback; ignore failures.
+      }
+    }
   } catch (error) {
     if (error.payload?.snapshot) {
       applyOnlineSnapshot(error.payload.snapshot);
@@ -1039,6 +1159,12 @@ els.newGameButton.addEventListener("click", () => {
   resetGameLocal();
 });
 
+els.funToggleButton.addEventListener("click", () => {
+  funMode.enabled = !funMode.enabled;
+  writeLocalValue(FUN_MODE_KEY, funMode.enabled ? "1" : "0");
+  render();
+});
+
 els.playerOneInput.addEventListener("change", (event) => {
   if (isOnlineMode()) {
     if (!hasAcceptedName()) {
@@ -1110,7 +1236,12 @@ els.scoreboardBody.addEventListener("click", (event) => {
   }
 
   if (isOnlineMode()) {
-    submitOnlineAction("takeScore", { categoryKey: button.dataset.scoreCategory });
+    const categoryKey = button.dataset.scoreCategory;
+    submitOnlineAction("takeScore", { categoryKey }, {
+      onSuccess: () => {
+        triggerFunMoment(categoryKey);
+      },
+    });
     return;
   }
 
@@ -1143,7 +1274,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=46").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=47").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.
@@ -1198,5 +1329,6 @@ els.playerOneInput.addEventListener("keydown", (event) => {
 
 render();
 window.addEventListener("load", () => {
+  loadFunConfig();
   tryEnableOnlineMode();
 });

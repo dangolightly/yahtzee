@@ -1,0 +1,77 @@
+{
+  "version": "1.0",
+  "displayIndicators": [
+    { "id": "spark", "label": "Spark Burst", "emoji": "✨" },
+    { "id": "buzz", "label": "Crowd Buzz", "emoji": "🎺" },
+    { "id": "crown", "label": "Royal Flex", "emoji": "👑" },
+    { "id": "glitch", "label": "Dice Glitch", "emoji": "⚡" },
+    { "id": "wild", "label": "YAHTZEE MELTDOWN", "emoji": "🔥" }
+  ],
+  "scores": {
+    "ones": [
+      { "text": "Tiny but mighty. One-point swagger.", "indicator": "spark" },
+      { "text": "Single pip, full confidence.", "indicator": "buzz" },
+      { "text": "You turned crumbs into drama.", "indicator": "glitch" }
+    ],
+    "twos": [
+      { "text": "Double trouble just clocked in.", "indicator": "buzz" },
+      { "text": "A respectable two-fer. Nicely done.", "indicator": "spark" },
+      { "text": "Pair pressure applied perfectly.", "indicator": "crown" }
+    ],
+    "threes": [
+      { "text": "Triple rhythm. Smooth scoring.", "indicator": "spark" },
+      { "text": "Three is a crowd and they are loud.", "indicator": "buzz" },
+      { "text": "Three-town just issued a permit.", "indicator": "glitch" }
+    ],
+    "fours": [
+      { "text": "Solid fours. Blueprint execution.", "indicator": "crown" },
+      { "text": "Four-lane highway to points.", "indicator": "buzz" },
+      { "text": "That line was cleaner than expected.", "indicator": "spark" }
+    ],
+    "fives": [
+      { "text": "High-five from the dice gods.", "indicator": "spark" },
+      { "text": "Fives loaded. Style points included.", "indicator": "crown" },
+      { "text": "You just upgraded to premium pips.", "indicator": "buzz" }
+    ],
+    "sixes": [
+      { "text": "Maximum face value energy.", "indicator": "crown" },
+      { "text": "Big six vibes. Heavy scoring.", "indicator": "buzz" },
+      { "text": "That is top-shelf dice behavior.", "indicator": "spark" }
+    ],
+    "threeKind": [
+      { "text": "Triplets delivered with authority.", "indicator": "buzz" },
+      { "text": "Three-kind secured. Nice pressure play.", "indicator": "crown" },
+      { "text": "That combo clicked like a lock.", "indicator": "spark" }
+    ],
+    "fourKind": [
+      { "text": "Four-of-a-kind. Absolute stomp.", "indicator": "crown" },
+      { "text": "Dice are officially in formation.", "indicator": "glitch" },
+      { "text": "That is a no-doubt power move.", "indicator": "buzz" }
+    ],
+    "fullHouse": [
+      { "text": "Welcome home. Full house achieved.", "indicator": "crown" },
+      { "text": "The mortgage is paid in points.", "indicator": "spark" },
+      { "text": "House party complete. Snacks acquired.", "indicator": "buzz" }
+    ],
+    "smallStraight": [
+      { "text": "Small straight, big grin.", "indicator": "spark" },
+      { "text": "Compact runway, clean takeoff.", "indicator": "buzz" },
+      { "text": "Sequence locked. Very tidy.", "indicator": "glitch" }
+    ],
+    "largeStraight": [
+      { "text": "Large straight. Catwalk certified.", "indicator": "crown" },
+      { "text": "Perfect line. Crowd is on its feet.", "indicator": "buzz" },
+      { "text": "Long-form poetry in pip language.", "indicator": "spark" }
+    ],
+    "yahtzee": [
+      { "text": "YAHTZEE DETONATION. WINDOWS SHOOK.", "indicator": "wild" },
+      { "text": "FIVE OF A KIND. REALITY BRIEFING FAILED.", "indicator": "wild" },
+      { "text": "THE DICE HAVE ASCENDED. YAHTZEE MODE: UNHINGED.", "indicator": "wild" }
+    ],
+    "chance": [
+      { "text": "Chance bucket cashed in with swagger.", "indicator": "glitch" },
+      { "text": "Chaos converted into respectable points.", "indicator": "spark" },
+      { "text": "You embraced randomness and won.", "indicator": "buzz" }
+    ]
+  }
+}

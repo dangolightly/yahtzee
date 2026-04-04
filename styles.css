@@ -485,8 +485,9 @@ input {
   transform: translate(-50%, -50%) rotate(45deg) scale(0.97);
   transform-origin: center center;
   z-index: 58;
-  width: min(90vw, 420px);
-  padding: 26px 34px;
+  width: min(96vw, 630px);
+  min-height: 150px;
+  padding: 39px 51px;
   clip-path: polygon(50% 0%, 58% 12%, 74% 2%, 72% 18%, 90% 12%, 82% 30%, 100% 32%, 86% 44%, 98% 56%, 82% 60%, 90% 76%, 72% 70%, 74% 88%, 58% 78%, 50% 100%, 42% 78%, 26% 88%, 28% 70%, 10% 76%, 18% 60%, 2% 56%, 14% 44%, 0% 32%, 18% 30%, 10% 12%, 28% 18%, 26% 2%, 42% 12%);
   border: 2px solid rgba(123, 63, 0, 0.55);
   background:
@@ -510,6 +511,7 @@ input {
   font-weight: 800;
   letter-spacing: 0.1em;
   text-transform: uppercase;
+  text-align: center;
 }
 
 .fun-flash-text {
@@ -517,6 +519,7 @@ input {
   font-size: 0.92rem;
   font-weight: 700;
   line-height: 1.24;
+  text-align: center;
 }
 
 .fun-flash.indicator-spark {

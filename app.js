@@ -433,7 +433,7 @@ function renderNameEntryModal() {
   updateInputValue(els.nameEntryInput, session.profileName);
   els.nameEntryCopy.textContent = session.submittingName
     ? "Entering your name and opening the challenger list..."
-    : session.notice || "Enter your name to join the challenger list.";
+    : session.notice || "Enter your name to continue.";
   els.nameEntryInput.disabled = session.submittingName;
   els.nameEntryButton.disabled = session.submittingName || !session.profileName.trim();
   els.nameEntryButton.textContent = session.submittingName ? "Entering..." : "Enter";
@@ -849,6 +849,32 @@ async function submitProfileUpdate() {
   }
 }
 
+async function submitNameEntry() {
+  if (session.submittingName) {
+    return;
+  }
+
+  session.profileName = String(els.nameEntryInput.value || "").slice(0, 24);
+  if (!session.profileName.trim()) {
+    session.notice = "Enter your name to continue.";
+    render();
+    return;
+  }
+
+  if (!isOnlineMode()) {
+    session.notice = "Connecting to live play...";
+    render();
+    await tryEnableOnlineMode();
+    if (!isOnlineMode()) {
+      session.notice = "Could not reach the live game right now.";
+      render();
+      return;
+    }
+  }
+
+  submitProfileUpdate();
+}
+
 async function joinOnlineGame(gameId) {
   if (session.joiningGameId) {
     return;
@@ -962,12 +988,7 @@ els.newGameButton.addEventListener("click", () => {
 
 els.nameEntryForm.addEventListener("submit", (event) => {
   event.preventDefault();
-  if (!isAwaitingOnlineName()) {
-    return;
-  }
-
-  session.profileName = String(els.nameEntryInput.value || "").slice(0, 24);
-  submitProfileUpdate();
+  submitNameEntry();
 });
 
 els.nameEntryInput.addEventListener("input", (event) => {
@@ -978,6 +999,34 @@ els.nameEntryInput.addEventListener("input", (event) => {
   session.profileName = String(event.target.value || "").slice(0, 24);
   session.notice = "";
   renderNameEntryModal();
+});
+
+els.nameEntryInput.addEventListener("change", (event) => {
+  if (!isAwaitingOnlineName()) {
+    return;
+  }
+
+  session.profileName = String(event.target.value || "").slice(0, 24);
+  session.notice = "";
+  renderNameEntryModal();
+});
+
+els.nameEntryInput.addEventListener("keydown", (event) => {
+  if (!isAwaitingOnlineName() || event.key !== "Enter") {
+    return;
+  }
+
+  event.preventDefault();
+  submitNameEntry();
+});
+
+els.nameEntryButton.addEventListener("click", (event) => {
+  if (!isAwaitingOnlineName()) {
+    return;
+  }
+
+  event.preventDefault();
+  submitNameEntry();
 });
 
 els.playerOneInput.addEventListener("change", (event) => {
@@ -1063,7 +1112,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=36").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=37").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

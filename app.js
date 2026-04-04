@@ -1,4 +1,6 @@
 const STORAGE_KEY = "yahtzee-state-v2";
+const CLIENT_ID_KEY = "yahtzee-client-id-v1";
+const SESSION_POLL_MS = 4000;
 
 const categories = [
   { key: "ones", label: "Ones", section: "upper" },
@@ -89,42 +91,65 @@ function clampRolls(value) {
   return Number.isInteger(numeric) && numeric >= 0 && numeric <= 3 ? numeric : 3;
 }
 
+function normalizeState(raw) {
+  if (!raw || !Array.isArray(raw.players) || raw.players.length !== 2) {
+    return createNewState();
+  }
+
+  return {
+    ...createNewState(),
+    ...raw,
+    players: raw.players.map((player, index) => ({
+      name: String(player.name || `Player ${index + 1}`).slice(0, 24),
+      scores: typeof player.scores === "object" && player.scores ? player.scores : {},
+      yahtzeeBonus: Number.isInteger(player.yahtzeeBonus) && player.yahtzeeBonus >= 0 ? player.yahtzeeBonus : 0,
+    })),
+    dice: normalizeDice(raw.dice),
+    held: normalizeHeld(raw.held),
+    rollsLeft: clampRolls(raw.rollsLeft),
+    currentPlayer: raw.currentPlayer === 1 ? 1 : 0,
+    turnStarted: Boolean(raw.turnStarted),
+  };
+}
+
 function loadState() {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
-    if (!raw) {
-      return createNewState();
-    }
-
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed.players) || parsed.players.length !== 2) {
-      return createNewState();
-    }
-
-    return {
-      ...createNewState(),
-      ...parsed,
-      players: parsed.players.map((player, index) => ({
-        name: String(player.name || `Player ${index + 1}`).slice(0, 24),
-        scores: typeof player.scores === "object" && player.scores ? player.scores : {},
-        yahtzeeBonus: Number.isInteger(player.yahtzeeBonus) && player.yahtzeeBonus >= 0 ? player.yahtzeeBonus : 0,
-      })),
-      dice: normalizeDice(parsed.dice),
-      held: normalizeHeld(parsed.held),
-      rollsLeft: clampRolls(parsed.rollsLeft),
-      currentPlayer: parsed.currentPlayer === 1 ? 1 : 0,
-      turnStarted: Boolean(parsed.turnStarted),
-    };
+    return raw ? normalizeState(JSON.parse(raw)) : createNewState();
   } catch {
     return createNewState();
   }
 }
 
+function saveState() {
+  if (session.mode === "offline") {
+    window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  }
+}
+
+function getOrCreateClientId() {
+  const existing = window.sessionStorage.getItem(CLIENT_ID_KEY);
+  if (existing) {
+    return existing;
+  }
+
+  const nextId = window.crypto?.randomUUID ? window.crypto.randomUUID() : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
+  window.sessionStorage.setItem(CLIENT_ID_KEY, nextId);
+  return nextId;
+}
+
 let state = loadState();
 
-function saveState() {
-  window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-}
+const session = {
+  clientId: getOrCreateClientId(),
+  mode: "offline",
+  role: null,
+  playerIndex: null,
+  phase: "offline",
+  notice: "",
+  pollHandle: null,
+  reconnecting: false,
+};
 
 function getCounts(dice) {
   return dice.reduce((counts, value) => {
@@ -138,11 +163,7 @@ function getUniqueSortedDice(dice) {
 }
 
 function getYahtzeeFace(dice) {
-  if (dice.length !== 5) {
-    return null;
-  }
-
-  return dice.every((value) => value === dice[0]) ? dice[0] : null;
+  return dice.length === 5 && dice.every((value) => value === dice[0]) ? dice[0] : null;
 }
 
 function isBonusYahtzeeEligible(player, dice) {
@@ -235,10 +256,6 @@ function getCurrentPlayer() {
   return state.players[state.currentPlayer];
 }
 
-function getRoundNumber() {
-  return Math.min(...state.players.map((player) => getPlayerTotals(player).filled)) + 1;
-}
-
 function isGameOver() {
   return state.players.every((player) => getPlayerTotals(player).filled === categories.length);
 }
@@ -269,42 +286,36 @@ function getWinnerSummary() {
   };
 }
 
-function getWinnerText() {
-  return getWinnerSummary().footer;
+function isOnlineMode() {
+  return session.mode === "online";
 }
 
-function getAvailableScores() {
-  const currentPlayer = getCurrentPlayer();
-  return categories
-    .filter((category) => getOpenCategories(currentPlayer, state.dice).some((openCategory) => openCategory.key === category.key))
-    .map((category) => ({
-      ...category,
-      score: scoreCategory(category.key, state.dice, currentPlayer),
-    }))
-    .sort((left, right) => right.score - left.score || left.label.localeCompare(right.label));
+function canCurrentClientAct() {
+  return !isOnlineMode() || (session.playerIndex === state.currentPlayer && session.phase === "active" && session.role !== "blocked");
 }
 
-function getHintText() {
-  if (isGameOver()) {
-    return getWinnerText();
-  }
-
-  if (!state.turnStarted) {
-    return "Roll to start the turn. Tap dice after the first roll to hold them.";
-  }
-
-  const forcedUpperCategory = getForcedUpperCategory(getCurrentPlayer(), state.dice);
-  if (forcedUpperCategory) {
-    const forcedLabel = categories.find((category) => category.key === forcedUpperCategory)?.label || forcedUpperCategory;
-    return `Bonus Yahtzee: rules force this roll into ${forcedLabel}.`;
-  }
-
-  const best = getAvailableScores().slice(0, 2);
-  return best.map((option) => `${option.label}: ${option.score}`).join("   |   ");
+function canCurrentClientRename(playerIndex) {
+  return !isOnlineMode() || session.playerIndex === playerIndex;
 }
 
-function randomDie() {
-  return Math.floor(Math.random() * 6) + 1;
+function renderNotice() {
+  const messages = [];
+
+  if (isOnlineMode() && session.notice) {
+    messages.push(session.notice);
+  }
+
+  if (isOfflineInstallBlocked) {
+    messages.push("This LAN address is not a secure install origin on iPhone. It can preview the game, but Add to Home Screen will not work offline until the app is hosted on HTTPS.");
+  }
+
+  if (messages.length > 0) {
+    els.installWarning.hidden = false;
+    els.installWarning.textContent = messages.join(" ");
+  } else {
+    els.installWarning.hidden = true;
+    els.installWarning.textContent = "";
+  }
 }
 
 function renderDice() {
@@ -314,7 +325,7 @@ function renderDice() {
     const button = fragment.querySelector(".die");
     const valueEl = fragment.querySelector(".die-value");
     button.dataset.index = String(index);
-    button.disabled = !state.turnStarted || state.rollsLeft === 3 || isGameOver();
+    button.disabled = !state.turnStarted || state.rollsLeft === 3 || isGameOver() || !canCurrentClientAct();
     button.classList.toggle("is-held", state.held[index]);
     button.setAttribute("aria-pressed", state.held[index] ? "true" : "false");
     valueEl.textContent = String(value);
@@ -328,7 +339,12 @@ function renderScoreCell(category, playerIndex, rowIndex) {
     return `<td class="score-cell"><span class="score-value">${player.scores[category.key]}</span></td>`;
   }
 
-  const canScore = playerIndex === state.currentPlayer && state.turnStarted && !isGameOver() && getOpenCategories(player, state.dice).some((openCategory) => openCategory.key === category.key);
+  const canScore = playerIndex === state.currentPlayer
+    && state.turnStarted
+    && !isGameOver()
+    && canCurrentClientAct()
+    && getOpenCategories(player, state.dice).some((openCategory) => openCategory.key === category.key);
+
   if (!canScore) {
     return '<td class="score-cell"><span class="score-open">Open</span></td>';
   }
@@ -415,16 +431,14 @@ function renderStatus() {
   els.playerTwoTotal.textContent = String(totals[1].grandTotal);
   els.playerOneChip.classList.toggle("is-active", state.currentPlayer === 0);
   els.playerTwoChip.classList.toggle("is-active", state.currentPlayer === 1);
-  els.rollButton.disabled = state.rollsLeft === 0 || isGameOver();
+
+  els.playerOneInput.disabled = !canCurrentClientRename(0);
+  els.playerTwoInput.disabled = !canCurrentClientRename(1);
+  els.newGameButton.disabled = isOnlineMode() && session.role === "blocked";
+  els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
   els.rollButton.textContent = `Roll (${isGameOver() ? 0 : state.rollsLeft})`;
 
-  if (isOfflineInstallBlocked) {
-    els.installWarning.hidden = false;
-    els.installWarning.textContent = "This LAN address is not a secure install origin on iPhone. It can preview the game, but Add to Home Screen will not work offline until the app is hosted on HTTPS.";
-  } else {
-    els.installWarning.hidden = true;
-    els.installWarning.textContent = "";
-  }
+  renderNotice();
 
   if (isGameOver()) {
     const winnerSummary = getWinnerSummary();
@@ -442,7 +456,6 @@ function renderStatus() {
     els.winnerTitle.textContent = "Winner";
     els.winnerCopy.textContent = "";
   }
-
 }
 
 function render() {
@@ -452,7 +465,19 @@ function render() {
   saveState();
 }
 
-function rollDice() {
+function randomDie() {
+  return Math.floor(Math.random() * 6) + 1;
+}
+
+function advanceTurnLocal() {
+  state.currentPlayer = state.currentPlayer === 0 ? 1 : 0;
+  state.dice = [1, 1, 1, 1, 1];
+  state.held = [false, false, false, false, false];
+  state.rollsLeft = 3;
+  state.turnStarted = false;
+}
+
+function rollDiceLocal() {
   if (state.rollsLeft === 0 || isGameOver()) {
     return;
   }
@@ -463,7 +488,7 @@ function rollDice() {
   render();
 }
 
-function toggleHold(index) {
+function toggleHoldLocal(index) {
   if (!state.turnStarted || state.rollsLeft === 3 || isGameOver()) {
     return;
   }
@@ -472,15 +497,7 @@ function toggleHold(index) {
   render();
 }
 
-function advanceTurn() {
-  state.currentPlayer = state.currentPlayer === 0 ? 1 : 0;
-  state.dice = [1, 1, 1, 1, 1];
-  state.held = [false, false, false, false, false];
-  state.rollsLeft = 3;
-  state.turnStarted = false;
-}
-
-function takeScore(categoryKey) {
+function takeScoreLocal(categoryKey) {
   if (isGameOver() || !state.turnStarted) {
     return;
   }
@@ -495,17 +512,17 @@ function takeScore(categoryKey) {
   }
 
   player.scores[categoryKey] = scoreCategory(categoryKey, state.dice, player);
-  advanceTurn();
+  advanceTurnLocal();
   render();
 }
 
-function updatePlayerName(playerIndex, value) {
+function updatePlayerNameLocal(playerIndex, value) {
   const nextName = value.trim() || `Player ${playerIndex + 1}`;
   state.players[playerIndex].name = nextName.slice(0, 24);
   render();
 }
 
-function resetGame() {
+function resetGameLocal() {
   if (!window.confirm("Start a new game and clear the scorecard?")) {
     return;
   }
@@ -514,12 +531,147 @@ function resetGame() {
   render();
 }
 
-els.rollButton.addEventListener("click", rollDice);
-els.newGameButton.addEventListener("click", resetGame);
-els.playerOneInput.addEventListener("change", (event) => updatePlayerName(0, event.target.value));
-els.playerTwoInput.addEventListener("change", (event) => updatePlayerName(1, event.target.value));
-els.playerOneInput.addEventListener("blur", (event) => updatePlayerName(0, event.target.value));
-els.playerTwoInput.addEventListener("blur", (event) => updatePlayerName(1, event.target.value));
+async function fetchJson(url, options = {}) {
+  const response = await fetch(url, {
+    ...options,
+    headers: {
+      "Content-Type": "application/json",
+      ...(options.headers || {}),
+    },
+  });
+
+  const payload = await response.json().catch(() => null);
+  if (!response.ok) {
+    const error = new Error(payload?.error || `Request failed: ${response.status}`);
+    error.payload = payload;
+    throw error;
+  }
+
+  return payload;
+}
+
+function applyOnlineSnapshot(snapshot) {
+  session.mode = "online";
+  session.role = snapshot.role;
+  session.playerIndex = snapshot.playerIndex;
+  session.phase = snapshot.lobby?.phase || "waiting";
+  session.notice = snapshot.lobby?.message || "";
+  session.reconnecting = false;
+  state = normalizeState(snapshot.state);
+  render();
+}
+
+function startSessionPolling() {
+  if (session.pollHandle) {
+    return;
+  }
+
+  session.pollHandle = window.setInterval(() => {
+    syncOnlineState().catch(() => {
+      session.reconnecting = true;
+      session.notice = "Trying to reconnect to the live game...";
+      render();
+    });
+  }, SESSION_POLL_MS);
+}
+
+async function claimOrRefreshSeat() {
+  return fetchJson("/api/session/claim", {
+    method: "POST",
+    body: JSON.stringify({ clientId: session.clientId }),
+  });
+}
+
+async function syncOnlineState() {
+  if (!isOnlineMode()) {
+    return;
+  }
+
+  const snapshot = session.role === "blocked" || session.playerIndex === null
+    ? await claimOrRefreshSeat()
+    : await fetchJson(`/api/session?clientId=${encodeURIComponent(session.clientId)}`);
+  applyOnlineSnapshot(snapshot);
+}
+
+async function submitOnlineAction(type, payload = {}) {
+  try {
+    const snapshot = await fetchJson("/api/action", {
+      method: "POST",
+      body: JSON.stringify({ clientId: session.clientId, type, ...payload }),
+    });
+    applyOnlineSnapshot(snapshot);
+  } catch (error) {
+    if (error.payload?.snapshot) {
+      applyOnlineSnapshot(error.payload.snapshot);
+    } else {
+      session.notice = error.message || "Online action failed.";
+      render();
+    }
+  }
+}
+
+async function tryEnableOnlineMode() {
+  try {
+    const snapshot = await claimOrRefreshSeat();
+    applyOnlineSnapshot(snapshot);
+    startSessionPolling();
+  } catch {
+    session.mode = "offline";
+    session.role = null;
+    session.playerIndex = null;
+    session.phase = "offline";
+    session.notice = "";
+    render();
+  }
+}
+
+els.rollButton.addEventListener("click", () => {
+  if (isOnlineMode()) {
+    submitOnlineAction("roll");
+    return;
+  }
+
+  rollDiceLocal();
+});
+
+els.newGameButton.addEventListener("click", () => {
+  if (isOnlineMode()) {
+    submitOnlineAction("newGame");
+    return;
+  }
+
+  resetGameLocal();
+});
+
+els.playerOneInput.addEventListener("change", (event) => {
+  if (isOnlineMode()) {
+    submitOnlineAction("rename", { name: event.target.value });
+    return;
+  }
+
+  updatePlayerNameLocal(0, event.target.value);
+});
+
+els.playerTwoInput.addEventListener("change", (event) => {
+  if (isOnlineMode()) {
+    submitOnlineAction("rename", { name: event.target.value });
+    return;
+  }
+
+  updatePlayerNameLocal(1, event.target.value);
+});
+
+els.playerOneInput.addEventListener("blur", (event) => {
+  if (!isOnlineMode()) {
+    updatePlayerNameLocal(0, event.target.value);
+  }
+});
+
+els.playerTwoInput.addEventListener("blur", (event) => {
+  if (!isOnlineMode()) {
+    updatePlayerNameLocal(1, event.target.value);
+  }
+});
 
 els.diceGrid.addEventListener("click", (event) => {
   const button = event.target.closest(".die");
@@ -527,7 +679,13 @@ els.diceGrid.addEventListener("click", (event) => {
     return;
   }
 
-  toggleHold(Number(button.dataset.index));
+  const index = Number(button.dataset.index);
+  if (isOnlineMode()) {
+    submitOnlineAction("toggleHold", { index });
+    return;
+  }
+
+  toggleHoldLocal(index);
 });
 
 els.scoreboardBody.addEventListener("click", (event) => {
@@ -536,12 +694,17 @@ els.scoreboardBody.addEventListener("click", (event) => {
     return;
   }
 
-  takeScore(button.dataset.scoreCategory);
+  if (isOnlineMode()) {
+    submitOnlineAction("takeScore", { categoryKey: button.dataset.scoreCategory });
+    return;
+  }
+
+  takeScoreLocal(button.dataset.scoreCategory);
 });
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=20").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=23").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.
@@ -550,3 +713,6 @@ if ("serviceWorker" in navigator) {
 }
 
 render();
+window.addEventListener("load", () => {
+  tryEnableOnlineMode();
+});

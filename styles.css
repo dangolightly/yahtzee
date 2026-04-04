@@ -410,8 +410,10 @@ thead th:first-child,
 }
 
 .category-label {
-  font-size: 0.94rem;
+  font-size: 0.98rem;
   font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
 }
 
 .score-cell {

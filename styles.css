@@ -481,8 +481,9 @@ input {
 .fun-flash {
   position: fixed;
   left: 50%;
-  bottom: calc(env(safe-area-inset-bottom, 0px) + 12px);
-  transform: translateX(-50%) translateY(10px) scale(0.97);
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(45deg) scale(0.97);
+  transform-origin: center center;
   z-index: 58;
   width: min(90vw, 420px);
   padding: 10px 12px;
@@ -496,7 +497,7 @@ input {
 
 .fun-flash.is-visible {
   opacity: 1;
-  transform: translateX(-50%) translateY(0) scale(1);
+  transform: translate(-50%, -50%) rotate(45deg) scale(1);
 }
 
 .fun-flash-indicator {
@@ -655,28 +656,28 @@ input {
 
 @keyframes flash-glitch {
   0% {
-    transform: translateX(-50%) translateY(0);
+    transform: translate(-50%, -50%) rotate(45deg);
     filter: hue-rotate(0deg);
   }
   50% {
-    transform: translateX(-49.4%) translateY(-1px);
+    transform: translate(-49.4%, -50.8%) rotate(45deg);
     filter: hue-rotate(24deg);
   }
   100% {
-    transform: translateX(-50%) translateY(0);
+    transform: translate(-50%, -50%) rotate(45deg);
     filter: hue-rotate(0deg);
   }
 }
 
 @keyframes flash-wild {
   0% {
-    transform: translateX(-50%) translateY(0) scale(1);
+    transform: translate(-50%, -50%) rotate(45deg) scale(1);
   }
   40% {
-    transform: translateX(-50%) translateY(-1px) scale(1.05);
+    transform: translate(-50%, -50%) rotate(45deg) scale(1.05);
   }
   100% {
-    transform: translateX(-50%) translateY(0) scale(1);
+    transform: translate(-50%, -50%) rotate(45deg) scale(1);
   }
 }
 

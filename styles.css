@@ -203,6 +203,23 @@ input {
   background: rgba(255, 255, 255, 0.24);
 }
 
+.player-chip.is-awaiting-name {
+  background: linear-gradient(180deg, rgba(143, 220, 138, 0.34), rgba(39, 82, 63, 0.82));
+  border-color: rgba(191, 242, 183, 0.78);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.16), 0 0 0 2px rgba(143, 220, 138, 0.2);
+  animation: name-pulse 1.4s ease-in-out infinite alternate;
+}
+
+.player-chip.is-awaiting-name input,
+.player-chip.is-awaiting-name strong,
+.player-chip.is-awaiting-name .player-slot {
+  color: #ffffff;
+}
+
+.player-chip.is-awaiting-name .player-slot {
+  background: rgba(255, 255, 255, 0.24);
+}
+
 .player-chip.is-owned {
   border-color: rgba(255, 209, 102, 0.88);
   box-shadow: inset 0 0 0 1px rgba(255, 209, 102, 0.24), 0 0 0 2px rgba(255, 209, 102, 0.12);
@@ -444,6 +461,10 @@ input {
   animation: winner-flash 1s ease-in-out infinite alternate;
 }
 
+.winner-banner.is-resettable {
+  cursor: pointer;
+}
+
 .winner-kicker {
   margin: 0;
   font-size: 0.62rem;
@@ -490,6 +511,17 @@ input {
   }
   to {
     transform: rotate(-4deg) translateY(4px);
+  }
+}
+
+@keyframes name-pulse {
+  from {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.12), 0 0 0 0 rgba(143, 220, 138, 0.12);
+    filter: saturate(1);
+  }
+  to {
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18), 0 0 22px rgba(143, 220, 138, 0.26);
+    filter: saturate(1.1);
   }
 }
 

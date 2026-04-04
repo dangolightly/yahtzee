@@ -193,6 +193,9 @@ const session = {
   disconnectSent: false,
 };
 
+let completedResetHandle = null;
+let completedResetPending = false;
+
 function getCounts(dice) {
   return dice.reduce((counts, value) => {
     counts[value] = (counts[value] || 0) + 1;
@@ -340,6 +343,19 @@ function hasAcceptedName() {
   return isOnlineMode() && ["waiting", "active", "completed"].includes(session.phase);
 }
 
+function isDefaultWinActive() {
+  return isOnlineMode() && session.phase === "completed" && !isGameOver();
+}
+
+function clearCompletedResetTimer() {
+  if (!completedResetHandle) {
+    return;
+  }
+
+  window.clearTimeout(completedResetHandle);
+  completedResetHandle = null;
+}
+
 function sendDisconnectSignal() {
   if (!isOnlineMode() || session.disconnectSent || !["waiting", "active"].includes(session.phase)) {
     return;
@@ -395,7 +411,11 @@ function renderLobby() {
 
   if (!accepted) {
     els.lobbyCopy.textContent = session.notice
-      || (session.reconnecting ? "Trying to reconnect..." : "");
+      || (session.reconnecting
+        ? "Trying to reconnect..."
+        : session.profileName
+        ? "Step 1: Press Enter on your name in Player 1 to open the challenger list."
+        : "Step 1: Type your name in Player 1, then press Enter to open the challenger list.");
     els.lobbyCopy.hidden = !els.lobbyCopy.textContent;
     els.queueList.innerHTML = "";
     return;
@@ -403,14 +423,14 @@ function renderLobby() {
 
   if (session.waitingGames.length === 0) {
     els.lobbyCopy.textContent = session.notice
-      || (session.reconnecting ? "Trying to reconnect..." : "Waiting for a challenger to become available.");
+      || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Choose a challenger below. If the list is empty, stay here and it will update.");
     els.lobbyCopy.hidden = false;
-    els.queueList.innerHTML = '<p class="queue-empty">No challengers yet. Waiting...</p>';
+    els.queueList.innerHTML = '<p class="queue-empty">No challengers available yet. Waiting for one to appear...</p>';
     return;
   }
 
   els.lobbyCopy.textContent = session.notice
-    || (session.reconnecting ? "Trying to reconnect..." : "Tap a challenger to accept them.");
+    || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Tap a challenger below to start.");
   els.lobbyCopy.hidden = false;
 
   els.queueList.innerHTML = session.waitingGames.map((game, index) => `
@@ -535,7 +555,7 @@ function renderStatus() {
   const rollsLeft = isGameOver() ? 0 : state.rollsLeft;
   const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
   const isMyTurn = isOnlineActiveTurn && ownedSeat === state.currentPlayer;
-  const isDefaultCompleted = online && session.phase === "completed";
+  const isDefaultCompleted = isDefaultWinActive();
   const playerOneLabel = online && !accepted ? session.profileName : state.players[0].name;
   const playerTwoLabel = online && !accepted ? "" : state.players[1].name;
 
@@ -549,6 +569,7 @@ function renderStatus() {
   els.playerTwoChip.classList.toggle("is-active", isOnlineActiveTurn ? (isMyTurn && ownedSeat === 1) : state.currentPlayer === 1);
   els.playerOneChip.classList.toggle("is-owned", ownedSeat === 0);
   els.playerTwoChip.classList.toggle("is-owned", ownedSeat === 1);
+  els.playerOneChip.classList.toggle("is-awaiting-name", online && !accepted);
   els.playerOneChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
   els.playerTwoChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
   els.playerOneSeatTag.hidden = ownedSeat !== 0;
@@ -577,17 +598,26 @@ function renderStatus() {
     const winnerSummary = isGameOver() ? getWinnerSummary() : {
       isTie: false,
       title: "Default Win",
-      copy: session.notice || "Your opponent left the game.",
+      copy: `${session.notice || "Your opponent left the game."} Resetting in 30 seconds. Tap anywhere to continue now.`,
     };
     els.winnerBanner.hidden = false;
     els.winnerBanner.classList.add("is-live");
+    els.winnerBanner.classList.toggle("is-resettable", isDefaultCompleted);
     els.winnerBanner.classList.toggle("is-tie", winnerSummary.isTie);
     els.winnerConfetti.textContent = winnerSummary.isTie ? "✨ 🤝 ✨" : "🎉 🏆 🎉";
     els.winnerTitle.textContent = winnerSummary.title;
     els.winnerCopy.textContent = winnerSummary.copy;
+    if (isDefaultCompleted && !completedResetHandle) {
+      completedResetHandle = window.setTimeout(() => {
+        completedResetHandle = null;
+        resetCompletedOnlineState();
+      }, 30_000);
+    }
   } else {
+    clearCompletedResetTimer();
     els.winnerBanner.hidden = true;
     els.winnerBanner.classList.remove("is-live");
+    els.winnerBanner.classList.remove("is-resettable");
     els.winnerBanner.classList.remove("is-tie");
     els.winnerConfetti.textContent = "🎉 ✨ 🎉";
     els.winnerTitle.textContent = "Winner";
@@ -791,6 +821,33 @@ async function submitOnlineAction(type, payload = {}) {
   }
 }
 
+async function resetCompletedOnlineState() {
+  if (!isDefaultWinActive() || completedResetPending) {
+    return;
+  }
+
+  clearCompletedResetTimer();
+  completedResetPending = true;
+
+  try {
+    const snapshot = await fetchJson("/api/lobby/leave", {
+      method: "POST",
+      body: JSON.stringify({ clientId: session.clientId }),
+    });
+    applyOnlineSnapshot(snapshot);
+  } catch (error) {
+    if (error.payload?.snapshot) {
+      applyOnlineSnapshot(error.payload.snapshot);
+      session.notice = error.message || "Could not reset the completed game.";
+    } else {
+      session.notice = error.message || "Could not reset the completed game.";
+    }
+    render();
+  } finally {
+    completedResetPending = false;
+  }
+}
+
 async function tryEnableOnlineMode() {
   try {
     const snapshot = await fetchJson(`/api/session?clientId=${encodeURIComponent(session.clientId)}`);
@@ -907,7 +964,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=33").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=34").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.
@@ -931,6 +988,14 @@ document.addEventListener("visibilitychange", () => {
   if (document.visibilityState === "hidden") {
     sendDisconnectSignal();
   }
+});
+
+document.addEventListener("pointerdown", () => {
+  if (!isDefaultWinActive()) {
+    return;
+  }
+
+  resetCompletedOnlineState();
 });
 
 els.playerOneInput.addEventListener("input", (event) => {

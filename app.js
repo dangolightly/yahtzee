@@ -422,7 +422,7 @@ function renderLobby() {
 }
 
 function renderNameEntryModal() {
-  const showModal = isAwaitingOnlineName();
+  const showModal = isAwaitingOnlineName() && !session.submittingName;
   els.nameEntryModal.hidden = !showModal;
 
   if (!showModal) {
@@ -431,12 +431,10 @@ function renderNameEntryModal() {
   }
 
   updateInputValue(els.nameEntryInput, session.profileName);
-  els.nameEntryCopy.textContent = session.submittingName
-    ? "Entering your name and opening the challenger list..."
-    : session.notice || "Enter your name to continue.";
-  els.nameEntryInput.disabled = session.submittingName;
-  els.nameEntryButton.disabled = session.submittingName || !session.profileName.trim();
-  els.nameEntryButton.textContent = session.submittingName ? "Entering..." : "Enter";
+  els.nameEntryCopy.textContent = session.notice || "Enter your name to continue.";
+  els.nameEntryInput.disabled = false;
+  els.nameEntryButton.disabled = !session.profileName.trim();
+  els.nameEntryButton.textContent = "Enter";
 
   if (!nameEntryModalVisible) {
     window.requestAnimationFrame(() => {
@@ -453,7 +451,7 @@ function renderNameEntryModal() {
 }
 
 function renderChallengerModal() {
-  const showModal = isAwaitingChallengerChoice();
+  const showModal = session.submittingName || isAwaitingChallengerChoice();
   els.challengerModal.hidden = !showModal;
 
   if (!showModal) {
@@ -462,12 +460,15 @@ function renderChallengerModal() {
     return;
   }
 
-  if (session.waitingGames.length === 0) {
+  if (session.submittingName) {
+    els.challengerCopy.textContent = "Opening challenger list...";
+    els.challengerList.innerHTML = '<p class="queue-empty">Waiting for a challenger to join.</p>';
+  } else if (session.waitingGames.length === 0) {
     els.challengerCopy.textContent = session.joiningGameId
       ? "Opening your game..."
       : session.notice
       || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Waiting for challengers. This list updates automatically.");
-    els.challengerList.innerHTML = '<p class="queue-empty">No challengers available yet. Waiting for one to appear...</p>';
+    els.challengerList.innerHTML = '<p class="queue-empty">Waiting for a challenger to join.</p>';
   } else {
     els.challengerCopy.textContent = session.joiningGameId
       ? "Opening your game..."
@@ -1112,7 +1113,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=37").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=38").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

@@ -33,12 +33,15 @@ const els = {
   playerTwoInput: document.querySelector("#player-two-input"),
   playerOneChip: document.querySelector("#player-one-chip"),
   playerTwoChip: document.querySelector("#player-two-chip"),
+  playerOneSeatTag: document.querySelector("#player-one-seat-tag"),
+  playerTwoSeatTag: document.querySelector("#player-two-seat-tag"),
   playerOneTotal: document.querySelector("#player-one-total"),
   playerTwoTotal: document.querySelector("#player-two-total"),
   playerOneHeading: document.querySelector("#player-one-heading"),
   playerTwoHeading: document.querySelector("#player-two-heading"),
   newGameButton: document.querySelector("#new-game-button"),
   rollButton: document.querySelector("#roll-button"),
+  sessionBanner: document.querySelector("#session-banner"),
   installWarning: document.querySelector("#install-warning"),
   winnerBanner: document.querySelector("#winner-banner"),
   winnerConfetti: document.querySelector("#winner-confetti"),
@@ -422,6 +425,8 @@ function renderScoreboard() {
 
 function renderStatus() {
   const totals = state.players.map(getPlayerTotals);
+  const ownedSeat = isOnlineMode() ? session.playerIndex : null;
+  const turnSeat = state.currentPlayer + 1;
 
   els.playerOneInput.value = state.players[0].name;
   els.playerTwoInput.value = state.players[1].name;
@@ -431,12 +436,35 @@ function renderStatus() {
   els.playerTwoTotal.textContent = String(totals[1].grandTotal);
   els.playerOneChip.classList.toggle("is-active", state.currentPlayer === 0);
   els.playerTwoChip.classList.toggle("is-active", state.currentPlayer === 1);
+  els.playerOneChip.classList.toggle("is-owned", ownedSeat === 0);
+  els.playerTwoChip.classList.toggle("is-owned", ownedSeat === 1);
+  els.playerOneSeatTag.hidden = ownedSeat !== 0;
+  els.playerTwoSeatTag.hidden = ownedSeat !== 1;
 
   els.playerOneInput.disabled = !canCurrentClientRename(0);
   els.playerTwoInput.disabled = !canCurrentClientRename(1);
   els.newGameButton.disabled = isOnlineMode() && session.role === "blocked";
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
   els.rollButton.textContent = `Roll (${isGameOver() ? 0 : state.rollsLeft})`;
+
+  if (isOnlineMode()) {
+    let bannerText = "";
+    if (session.role === "player1") {
+      bannerText = `You are Player 1. Turn: Player ${turnSeat}.`;
+    } else if (session.role === "player2") {
+      bannerText = `You are Player 2. Turn: Player ${turnSeat}.`;
+    } else if (session.role === "blocked") {
+      bannerText = "You are not seated in this game. Both player seats are occupied.";
+    } else {
+      bannerText = "Connecting to the live game...";
+    }
+
+    els.sessionBanner.hidden = false;
+    els.sessionBanner.textContent = bannerText;
+  } else {
+    els.sessionBanner.hidden = true;
+    els.sessionBanner.textContent = "";
+  }
 
   renderNotice();
 
@@ -705,7 +733,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=24").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=25").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

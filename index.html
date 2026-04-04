@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=24" />
+    <link rel="stylesheet" href="styles.css?v=25" />
   </head>
   <body>
     <div class="app-shell">
@@ -20,16 +20,20 @@
           <label class="player-chip" id="player-one-chip">
             <span class="player-slot">1</span>
             <input id="player-one-input" name="playerOne" maxlength="18" autocomplete="off" />
+            <span id="player-one-seat-tag" class="seat-tag" hidden>You</span>
             <strong id="player-one-total">0</strong>
           </label>
           <label class="player-chip" id="player-two-chip">
             <span class="player-slot">2</span>
             <input id="player-two-input" name="playerTwo" maxlength="18" autocomplete="off" />
+            <span id="player-two-seat-tag" class="seat-tag" hidden>You</span>
             <strong id="player-two-total">0</strong>
           </label>
           <button id="new-game-button" class="secondary-button compact-button" type="button">New</button>
         </div>
       </section>
+
+      <p id="session-banner" class="session-banner" hidden></p>
 
       <section class="dice-strip panel" aria-label="Dice tray">
         <div id="dice-grid" class="dice-grid"></div>
@@ -67,6 +71,6 @@
       </button>
     </template>
 
-    <script type="module" src="app.js?v=24"></script>
+    <script type="module" src="app.js?v=25"></script>
   </body>
 </html>

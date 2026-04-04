@@ -5,6 +5,7 @@ const CHALLENGER_LIST_OPEN_KEY = "yahtzee-challenger-open-v1";
 const TUTORIAL_DONE_KEY = "yahtzee-tutorial-done-v1";
 const FUN_CONFIG_URL = "./yahtzee-fun-config.json";
 const SESSION_POLL_MS = 4000;
+const FUN_CONFIG_REFRESH_MS = 10_000;
 
 const categories = [
   { key: "ones", label: "Ones", section: "upper" },
@@ -250,6 +251,7 @@ let completedResetHandle = null;
 let completedResetPending = false;
 let highlightedTutorialTarget = null;
 let funFlashHandle = null;
+let funConfigRefreshHandle = null;
 
 function getCounts(dice) {
   return dice.reduce((counts, value) => {
@@ -826,10 +828,25 @@ async function loadFunConfig() {
     funMode.config = payload;
   } catch {
     funMode.config = {
+      enabled: false,
       displayIndicators: [{ id: "spark", label: "Party mode", emoji: "🎲" }],
       scores: {},
     };
   }
+
+  if (!isConfigEnabled(funMode.config?.enabled, true)) {
+    clearFunFlash();
+  }
+}
+
+function startFunConfigRefresh() {
+  if (funConfigRefreshHandle) {
+    return;
+  }
+
+  funConfigRefreshHandle = window.setInterval(() => {
+    loadFunConfig();
+  }, FUN_CONFIG_REFRESH_MS);
 }
 
 function clearTutorialHighlight() {
@@ -1368,7 +1385,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=53").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=54").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.
@@ -1389,6 +1406,10 @@ window.addEventListener("pagehide", (event) => {
 });
 
 document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState === "visible") {
+    loadFunConfig();
+  }
+
   if (document.visibilityState === "hidden") {
     sendDisconnectSignal();
   }
@@ -1425,5 +1446,6 @@ els.playerOneInput.addEventListener("keydown", (event) => {
 render();
 window.addEventListener("load", () => {
   loadFunConfig();
+  startFunConfigRefresh();
   tryEnableOnlineMode();
 });

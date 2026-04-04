@@ -322,7 +322,7 @@ function renderDice() {
   });
 }
 
-function renderScoreCell(category, playerIndex) {
+function renderScoreCell(category, playerIndex, rowIndex) {
   const player = state.players[playerIndex];
   if (category.key in player.scores) {
     return `<td class="score-cell"><span class="score-value">${player.scores[category.key]}</span></td>`;
@@ -334,8 +334,9 @@ function renderScoreCell(category, playerIndex) {
   }
 
   const preview = scoreCategory(category.key, state.dice, player);
+  const staggerClass = rowIndex % 2 === 0 ? "stagger-right" : "stagger-left";
   return `
-    <td class="score-cell">
+    <td class="score-cell ${staggerClass}">
       <button class="score-button is-active" type="button" data-score-category="${category.key}">${preview}</button>
     </td>
   `;
@@ -344,11 +345,11 @@ function renderScoreCell(category, playerIndex) {
 function renderCategoryRows(sectionName, sectionKey) {
   const rows = categories
     .filter((category) => category.section === sectionKey)
-    .map((category) => `
+    .map((category, rowIndex) => `
       <tr>
         <td class="category-label">${category.label}</td>
-        ${renderScoreCell(category, 0)}
-        ${renderScoreCell(category, 1)}
+        ${renderScoreCell(category, 0, rowIndex)}
+        ${renderScoreCell(category, 1, rowIndex)}
       </tr>
     `)
     .join("");
@@ -535,7 +536,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=9").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=10").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

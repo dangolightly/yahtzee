@@ -42,7 +42,23 @@ Then open `http://localhost:4173` on one or two devices on the same network. The
 
 The repository is ready to deploy as a Node web service.
 
+[![Deploy on Railway](https://railway.com/button.svg)](https://railway.com/new?referralCode=github&repo=https://github.com/dangolightly/yahtzee)
 [![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dangolightly/yahtzee)
+
+### Railway
+
+1. Open the Railway deploy link above.
+2. Sign in to Railway with GitHub if prompted.
+3. Select this repo.
+4. Railway should auto-detect the Node app and use `npm start`.
+5. After deploy, generate a public domain for the service.
+6. Open that Railway URL from both devices.
+
+If Railway asks for a start command manually, use:
+
+```bash
+npm start
+```
 
 ### Render
 

@@ -49,7 +49,6 @@ const els = {
   queueSection: document.querySelector("#queue-section"),
   queueList: document.querySelector("#queue-list"),
   funFlash: document.querySelector("#fun-flash"),
-  funFlashIndicator: document.querySelector("#fun-flash-indicator"),
   funFlashText: document.querySelector("#fun-flash-text"),
   tutorialOverlay: document.querySelector("#tutorial-overlay"),
   tutorialBubble: document.querySelector("#tutorial-bubble"),
@@ -724,11 +723,6 @@ function isConfigEnabled(value, defaultValue = true) {
   return !["off", "false", "0", "disabled", "no"].includes(normalized);
 }
 
-function getEnabledIndicators() {
-  const indicators = Array.isArray(funMode.config?.displayIndicators) ? funMode.config.displayIndicators : [];
-  return indicators.filter((indicator) => isConfigEnabled(indicator?.enabled, true));
-}
-
 function getScoreFunConfig(categoryKey) {
   const raw = funMode.config?.scores?.[categoryKey];
   if (Array.isArray(raw)) {
@@ -759,16 +753,6 @@ function clearFunFlash() {
   els.funFlash.className = "fun-flash";
 }
 
-function getFunIndicator(indicatorId) {
-  const fallback = { id: "spark", label: "Party mode", emoji: "🎲" };
-  const indicators = getEnabledIndicators();
-  if (!indicators.length) {
-    return fallback;
-  }
-
-  return indicators.find((indicator) => indicator.id === indicatorId) || indicators[0] || fallback;
-}
-
 function triggerFunMoment(categoryKey) {
   if (!funMode.config || !els.funFlash || !isConfigEnabled(funMode.config?.enabled, true)) {
     return;
@@ -790,20 +774,12 @@ function triggerFunMoment(categoryKey) {
     return;
   }
 
-  const indicator = getFunIndicator(choice?.indicator);
-  const indicatorLabel = String(indicator?.label || "Party mode");
-  const indicatorEmoji = String(indicator?.emoji || "🎲");
-  const indicatorId = String(indicator?.id || "spark");
-
-  if (els.funFlashIndicator) {
-    els.funFlashIndicator.textContent = `${indicatorEmoji} ${indicatorLabel}`;
-  }
   if (els.funFlashText) {
     els.funFlashText.textContent = line;
   }
 
   els.funFlash.hidden = false;
-  els.funFlash.className = `fun-flash is-visible indicator-${indicatorId}`;
+  els.funFlash.className = "fun-flash is-visible";
 
   if (funFlashHandle) {
     window.clearTimeout(funFlashHandle);
@@ -829,7 +805,6 @@ async function loadFunConfig() {
   } catch {
     funMode.config = {
       enabled: false,
-      displayIndicators: [{ id: "spark", label: "Party mode", emoji: "🎲" }],
       scores: {},
     };
   }
@@ -1385,7 +1360,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=54").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=55").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

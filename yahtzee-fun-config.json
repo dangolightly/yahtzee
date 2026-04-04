@@ -1,38 +1,6 @@
 {
   "version": "1.2",
   "enabled": "off",
-  "displayIndicators": [
-    {
-      "id": "spark",
-      "label": "Spark Burst",
-      "emoji": "*",
-      "enabled": "on"
-    },
-    {
-      "id": "buzz",
-      "label": "Crowd Buzz",
-      "emoji": ">>",
-      "enabled": "on"
-    },
-    {
-      "id": "crown",
-      "label": "Royal Flex",
-      "emoji": "^^",
-      "enabled": "on"
-    },
-    {
-      "id": "glitch",
-      "label": "Dice Glitch",
-      "emoji": "!!",
-      "enabled": "on"
-    },
-    {
-      "id": "wild",
-      "label": "YAHTZEE MELTDOWN",
-      "emoji": "!!!",
-      "enabled": "on"
-    }
-  ],
   "scores": {
     "ones": {
       "enabled": "on",

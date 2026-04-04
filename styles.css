@@ -495,42 +495,12 @@ input {
   transform: translate(-50%, -50%) rotate(45deg) scale(1);
 }
 
-.fun-flash-indicator {
-  margin: 0;
-  font-size: 0.66rem;
-  font-weight: 800;
-  letter-spacing: 0.1em;
-  text-transform: uppercase;
-  text-align: center;
-}
-
 .fun-flash-text {
-  margin: 3px 0 0;
+  margin: 0;
   font-size: 0.92rem;
   font-weight: 700;
   line-height: 1.24;
   text-align: center;
-}
-
-.fun-flash.indicator-spark {
-  box-shadow: 0 0 0 2px rgba(255, 177, 81, 0.48), 0 22px 34px rgba(0, 0, 0, 0.34);
-}
-
-.fun-flash.indicator-buzz {
-  box-shadow: 0 0 0 2px rgba(255, 140, 26, 0.52), 0 22px 34px rgba(0, 0, 0, 0.34);
-}
-
-.fun-flash.indicator-crown {
-  box-shadow: 0 0 0 2px rgba(255, 196, 101, 0.5), 0 22px 34px rgba(0, 0, 0, 0.34);
-}
-
-.fun-flash.indicator-glitch {
-  animation: flash-glitch 260ms steps(2) 3;
-}
-
-.fun-flash.indicator-wild {
-  box-shadow: 0 0 0 3px rgba(255, 191, 96, 0.58), 0 28px 42px rgba(0, 0, 0, 0.42);
-  animation: flash-wild 740ms ease-in-out 2;
 }
 
 .roll-button.is-their-turn:disabled {
@@ -651,33 +621,6 @@ input {
   to {
     transform: translateY(-1px);
     box-shadow: 0 14px 28px rgba(76, 168, 111, 0.42);
-  }
-}
-
-@keyframes flash-glitch {
-  0% {
-    transform: translate(-50%, -50%) rotate(45deg);
-    filter: hue-rotate(0deg);
-  }
-  50% {
-    transform: translate(-49.4%, -50.8%) rotate(45deg);
-    filter: hue-rotate(24deg);
-  }
-  100% {
-    transform: translate(-50%, -50%) rotate(45deg);
-    filter: hue-rotate(0deg);
-  }
-}
-
-@keyframes flash-wild {
-  0% {
-    transform: translate(-50%, -50%) rotate(45deg) scale(1);
-  }
-  40% {
-    transform: translate(-50%, -50%) rotate(45deg) scale(1.05);
-  }
-  100% {
-    transform: translate(-50%, -50%) rotate(45deg) scale(1);
   }
 }
 

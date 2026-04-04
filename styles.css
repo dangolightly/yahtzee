@@ -6,8 +6,8 @@
   --line: rgba(255, 255, 255, 0.14);
   --text: #fff7ef;
   --muted: #d9d0ef;
-  --green: #ff6b35;
-  --green-deep: #d9471a;
+  --green: #8fdc8a;
+  --green-deep: #4ca86f;
   --coral: #ffb703;
   --sky: #5eead4;
   --gold: #ffd166;
@@ -98,7 +98,7 @@ input {
 .dice-strip,
 .status-strip,
 .scoreboard-panel {
-  padding: 6px;
+  padding: 5px;
 }
 
 .player-strip {
@@ -111,9 +111,9 @@ input {
   display: grid;
   grid-template-columns: 24px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 6px;
-  min-height: 38px;
-  padding: 6px 8px;
+  gap: 5px;
+  min-height: 32px;
+  padding: 4px 7px;
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -142,7 +142,7 @@ input {
   border: 0;
   background: transparent;
   color: var(--text);
-  font-size: 0.94rem;
+  font-size: 0.88rem;
   font-weight: 700;
 }
 
@@ -153,7 +153,7 @@ input {
 .player-chip strong {
   min-width: 28px;
   text-align: right;
-  font-size: 0.92rem;
+  font-size: 0.86rem;
 }
 
 .primary-button,
@@ -167,16 +167,16 @@ input {
 
 .primary-button,
 .secondary-button {
-  min-height: 38px;
-  padding: 0 12px;
+  min-height: 32px;
+  padding: 0 10px;
   border-radius: 999px;
   font-weight: 700;
 }
 
 .primary-button {
-  background: linear-gradient(180deg, #ff8a3d, #ff4d4d 60%, #c83cff);
-  color: #f7f3eb;
-  box-shadow: 0 10px 22px rgba(255, 77, 77, 0.28);
+  background: linear-gradient(180deg, #bff2b7, #8fdc8a 58%, #4ca86f);
+  color: #16395d;
+  box-shadow: 0 10px 22px rgba(76, 168, 111, 0.28);
 }
 
 .secondary-button {
@@ -220,7 +220,7 @@ input {
 }
 
 .die {
-  min-height: 60px;
+  min-height: 50px;
   display: grid;
   place-items: center;
   border-radius: 14px;
@@ -237,12 +237,17 @@ input {
 
 .die-value {
   font-family: "Baskerville", "Georgia", serif;
-  font-size: clamp(1.65rem, 6vw, 2rem);
+  font-size: clamp(1.4rem, 5vw, 1.75rem);
   line-height: 1;
+  color: #ffffff;
+}
+
+.die.is-held .die-value {
+  color: #ffffff;
 }
 
 .roll-button {
-  min-height: 60px;
+  min-height: 50px;
   border-radius: 16px;
 }
 
@@ -253,15 +258,15 @@ input {
 }
 
 .status-pill {
-  min-height: 34px;
-  padding: 6px 8px;
+  min-height: 28px;
+  padding: 4px 7px;
   border-radius: var(--radius-md);
   background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
 }
 
 .status-pill span {
   display: block;
-  font-size: 0.58rem;
+  font-size: 0.54rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -269,8 +274,8 @@ input {
 
 .status-pill strong {
   display: block;
-  margin-top: 2px;
-  font-size: 0.9rem;
+  margin-top: 1px;
+  font-size: 0.82rem;
 }
 
 .current-pill strong {
@@ -458,13 +463,13 @@ thead th:first-child,
 }
 
 .score-button {
-  background: rgba(255, 255, 255, 0.16);
-  color: #fff2de;
+  background: linear-gradient(180deg, #bff2b7, #8fdc8a 58%, #4ca86f);
+  color: #16395d;
 }
 
 .score-button.is-active {
-  background: linear-gradient(180deg, #ff8a3d, #ff4d8d 58%, #7f5af0);
-  color: #f8f4eb;
+  background: linear-gradient(180deg, #203b73, #10254b 58%, #09162f);
+  color: #ffffff;
 }
 
 .score-value {
@@ -500,8 +505,8 @@ thead th:first-child,
 
   .player-chip {
     grid-template-columns: 20px minmax(0, 1fr) auto;
-    min-height: 34px;
-    padding: 5px 6px;
+    min-height: 30px;
+    padding: 4px 5px;
   }
 
   .player-slot {
@@ -526,7 +531,7 @@ thead th:first-child,
 
   .die,
   .roll-button {
-    min-height: 54px;
+    min-height: 46px;
   }
 
   .status-strip {

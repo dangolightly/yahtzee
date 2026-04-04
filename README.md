@@ -2,6 +2,18 @@
 
 Yahtzee Cabin is a no-build Progressive Web App for two-player Yahtzee. When it is served through the bundled Node server, two online sessions can claim Player 1 and Player 2 and play from separate devices. When the multiplayer API is unavailable, it falls back to pass-and-play on one shared device and can still be installed for offline play.
 
+## Road-ready hosting
+
+If you want this to work while traveling with internet access, the correct model is:
+
+- Keep all code in this repo
+- Deploy this repo to a Node-capable host
+- Open the hosted URL from both devices
+
+The multiplayer logic already lives in this repo in `server.js`. The only thing GitHub Pages cannot do is execute that Node server. For road use, deploy this same repo to a host such as Render, Railway, Fly.io, or any VPS that can run `npm start`.
+
+This means the solution still fully lives in the repo. The repo just needs to be hosted on a platform that can run Node, rather than a static-only host.
+
 ## MVP scope
 
 - Two named players on one shared device when offline
@@ -26,9 +38,34 @@ npm start
 
 Then open `http://localhost:4173` on one or two devices on the same network. The first active session claims Player 1, the second claims Player 2, and any later sessions are blocked until a seat opens.
 
+## Deploy from this repo
+
+The repository is ready to deploy as a Node web service.
+
+### Render
+
+1. Push this repo to GitHub.
+2. In Render, create a new Web Service from the repo.
+3. Use these settings:
+	- Runtime: `Node`
+	- Build command: `npm install`
+	- Start command: `npm start`
+4. Deploy.
+5. Open the Render URL from both devices.
+
+### Any Node host
+
+If the host supports standard Node apps, it only needs to:
+
+1. clone the repo
+2. run `npm install`
+3. run `npm start`
+
+The server already respects the `PORT` environment variable, so standard platform routing will work.
+
 ## Try it on an iPhone
 
-To test the installed PWA on iPhone, the app needs to be served over HTTPS. Static hosts such as GitHub Pages support the offline single-device mode only, because they cannot run the multiplayer session API. For true two-device online play, the same files need to be served from a Node-capable host. Then:
+To test the installed PWA on iPhone, the app needs to be served over HTTPS. Static hosts such as GitHub Pages support the offline single-device mode only, because they cannot run the multiplayer session API. For true two-device online play on the road, deploy this repo to a Node-capable host and then:
 
 1. Open the site in Safari.
 2. Use Share > Add to Home Screen.
@@ -42,4 +79,11 @@ To test the installed PWA on iPhone, the app needs to be served over HTTPS. Stat
 - `app.js`: Yahtzee state and scoring logic
 - `sw.js`: offline caching
 - `manifest.webmanifest`: install metadata
-- `server.js`: tiny static server with multiplayer session management
+- `server.js`: tiny Node server with multiplayer session management
+
+## Multiplayer hosting note
+
+If you are online and want two separate devices to play each other, do not use GitHub Pages for the live game URL.
+
+- GitHub Pages: offline installable, static, single-device fallback only
+- Node deployment from this repo: online two-device multiplayer and offline fallback

@@ -411,6 +411,10 @@ function isDefaultWinActive() {
   return isOnlineMode() && session.phase === "completed" && !isGameOver();
 }
 
+function isOnlineCompletedState() {
+  return isOnlineMode() && session.phase === "completed";
+}
+
 function clearCompletedResetTimer() {
   if (!completedResetHandle) {
     return;
@@ -628,6 +632,7 @@ function renderStatus() {
   const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
   const isMyTurn = isOnlineActiveTurn && ownedSeat === state.currentPlayer;
   const isDefaultCompleted = isDefaultWinActive();
+  const isOnlineCompleted = isOnlineCompletedState();
   const playerOneLabel = online && !accepted ? session.profileName : state.players[0].name;
   const playerTwoLabel = online && !accepted ? "" : state.players[1].name;
 
@@ -655,7 +660,7 @@ function renderStatus() {
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
   els.rollButton.classList.toggle("is-your-turn", isMyTurn);
   els.rollButton.classList.toggle("is-their-turn", isOnlineActiveTurn && !isMyTurn);
-  els.rollButton.textContent = isDefaultCompleted
+  els.rollButton.textContent = (isGameOver() || isOnlineCompleted)
     ? "Game Over"
     : isOnlineActiveTurn
     ? `${isMyTurn ? "Your" : "Their"} Roll (${rollsLeft})`
@@ -666,20 +671,23 @@ function renderStatus() {
 
   renderNotice();
 
-  if (isGameOver() || isDefaultCompleted) {
+  if (isGameOver() || isOnlineCompleted) {
     const winnerSummary = isGameOver() ? getWinnerSummary() : {
       isTie: false,
       title: "Default Win",
       copy: `${session.notice || "Your opponent left the game."} Resetting in 30 seconds. Tap anywhere to continue now.`,
     };
+    const winnerCopy = isOnlineCompleted && !isDefaultCompleted
+      ? `${winnerSummary.copy} Resetting in 30 seconds. Tap anywhere to continue now.`
+      : winnerSummary.copy;
     els.winnerBanner.hidden = false;
     els.winnerBanner.classList.add("is-live");
-    els.winnerBanner.classList.toggle("is-resettable", isDefaultCompleted);
+    els.winnerBanner.classList.toggle("is-resettable", isOnlineCompleted);
     els.winnerBanner.classList.toggle("is-tie", winnerSummary.isTie);
     els.winnerConfetti.textContent = winnerSummary.isTie ? "✨ 🤝 ✨" : "🎉 🏆 🎉";
     els.winnerTitle.textContent = winnerSummary.title;
-    els.winnerCopy.textContent = winnerSummary.copy;
-    if (isDefaultCompleted && !completedResetHandle) {
+    els.winnerCopy.textContent = winnerCopy;
+    if (isOnlineCompleted && !completedResetHandle) {
       completedResetHandle = window.setTimeout(() => {
         completedResetHandle = null;
         resetCompletedOnlineState();
@@ -1185,7 +1193,7 @@ async function handleOnlineNewGameClick() {
 }
 
 async function resetCompletedOnlineState() {
-  if (!isDefaultWinActive() || completedResetPending) {
+  if (!isOnlineCompletedState() || completedResetPending) {
     return;
   }
 
@@ -1360,7 +1368,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=52").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=53").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.
@@ -1387,7 +1395,7 @@ document.addEventListener("visibilitychange", () => {
 });
 
 document.addEventListener("pointerdown", () => {
-  if (!isDefaultWinActive()) {
+  if (!isOnlineCompletedState()) {
     return;
   }
 

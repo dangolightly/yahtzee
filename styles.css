@@ -447,12 +447,21 @@ thead th:first-child,
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
 }
 
-.score-cell.stagger-left .score-button.is-active {
+.score-button.is-scratch {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
+  color: #fff7ef;
+  border: 1px dashed rgba(255, 255, 255, 0.32);
+  box-shadow: none;
+}
+
+.score-cell.stagger-left .score-button.is-active,
+.score-cell.stagger-left .score-button.is-scratch {
   width: 50%;
   margin: 0;
 }
 
-.score-cell.stagger-right .score-button.is-active {
+.score-cell.stagger-right .score-button.is-active,
+.score-cell.stagger-right .score-button.is-scratch {
   width: 50%;
   margin: 0 0 0 auto;
 }
@@ -515,15 +524,19 @@ thead th:first-child,
   }
 
   .score-cell.stagger-left .score-button.is-active,
-  .score-cell.stagger-right .score-button.is-active {
+  .score-cell.stagger-left .score-button.is-scratch,
+  .score-cell.stagger-right .score-button.is-active,
+  .score-cell.stagger-right .score-button.is-scratch {
     width: 50%;
   }
 
-  .score-cell.stagger-left .score-button.is-active {
+  .score-cell.stagger-left .score-button.is-active,
+  .score-cell.stagger-left .score-button.is-scratch {
     margin: 0;
   }
 
-  .score-cell.stagger-right .score-button.is-active {
+  .score-cell.stagger-right .score-button.is-active,
+  .score-cell.stagger-right .score-button.is-scratch {
     margin: 0 0 0 auto;
   }
 

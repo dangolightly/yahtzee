@@ -335,9 +335,11 @@ function renderScoreCell(category, playerIndex, rowIndex) {
 
   const preview = scoreCategory(category.key, state.dice, player);
   const staggerClass = rowIndex % 2 === 0 ? "stagger-right" : "stagger-left";
+  const buttonLabel = preview > 0 ? String(preview) : "Scratch";
+  const buttonClass = preview > 0 ? "score-button is-active" : "score-button is-scratch";
   return `
     <td class="score-cell ${staggerClass}">
-      <button class="score-button is-active" type="button" data-score-category="${category.key}">${preview}</button>
+      <button class="${buttonClass}" type="button" data-score-category="${category.key}">${buttonLabel}</button>
     </td>
   `;
 }
@@ -539,7 +541,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=16").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=17").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

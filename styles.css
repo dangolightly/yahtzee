@@ -62,10 +62,10 @@ input {
   min-height: 100dvh;
   width: min(100%, 920px);
   margin: 0 auto;
-  padding: calc(env(safe-area-inset-top, 0px) + 6px) 6px calc(env(safe-area-inset-bottom, 0px) + 2px);
+  padding: calc(env(safe-area-inset-top, 0px) + 5px) 6px calc(env(safe-area-inset-bottom, 0px) + 1px);
   display: grid;
   grid-template-rows: auto auto auto auto 1fr;
-  gap: 4px;
+  gap: 3px;
 }
 
 .panel {
@@ -89,13 +89,13 @@ input {
 .top-strip,
 .dice-strip,
 .scoreboard-panel {
-  padding: 4px;
+  padding: 3px;
 }
 
 .player-strip {
   display: grid;
   grid-template-columns: 1fr 1fr auto;
-  gap: 6px;
+  gap: 4px;
 }
 
 .player-chip {
@@ -103,8 +103,8 @@ input {
   grid-template-columns: 24px minmax(0, 1fr) auto;
   align-items: center;
   gap: 4px;
-  min-height: 30px;
-  padding: 3px 6px;
+  min-height: 28px;
+  padding: 2px 5px;
   border-radius: var(--radius-lg);
   background: rgba(255, 255, 255, 0.08);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -168,8 +168,8 @@ input {
 
 .primary-button,
 .secondary-button {
-  min-height: 30px;
-  padding: 0 9px;
+  min-height: 28px;
+  padding: 0 8px;
   border-radius: 999px;
   font-weight: 700;
 }
@@ -210,18 +210,18 @@ input {
 .dice-strip {
   display: grid;
   grid-template-columns: minmax(0, 1fr) 86px;
-  gap: 6px;
+  gap: 4px;
   align-items: stretch;
 }
 
 .dice-grid {
   display: grid;
   grid-template-columns: repeat(5, minmax(0, 1fr));
-  gap: 6px;
+  gap: 4px;
 }
 
 .die {
-  min-height: 46px;
+  min-height: 42px;
   display: grid;
   place-items: center;
   border-radius: 14px;
@@ -250,7 +250,7 @@ input {
 }
 
 .roll-button {
-  min-height: 46px;
+  min-height: 42px;
   border-radius: 16px;
 }
 
@@ -376,14 +376,14 @@ thead th {
 
 th,
 td {
-  padding: 6px 7px;
+  padding: 5px 6px;
   border-bottom: 1px solid var(--line);
   text-align: left;
   vertical-align: middle;
 }
 
 th {
-  font-size: 0.76rem;
+  font-size: 0.72rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -395,9 +395,9 @@ thead th:first-child,
 }
 
 .section-row td {
-  padding-top: 6px;
-  padding-bottom: 3px;
-  font-size: 0.68rem;
+  padding-top: 5px;
+  padding-bottom: 2px;
+  font-size: 0.62rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -405,7 +405,7 @@ thead th:first-child,
 }
 
 .category-label {
-  font-size: 1rem;
+  font-size: 0.94rem;
   font-weight: 700;
 }
 
@@ -427,11 +427,11 @@ thead th:first-child,
 .score-value,
 .score-open {
   width: 100%;
-  min-height: 28px;
+  min-height: 25px;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  font-size: 0.94rem;
+  font-size: 0.88rem;
   font-weight: 700;
 }
 
@@ -482,7 +482,7 @@ thead th:first-child,
 .totals-row td,
 .winner-row td {
   background: rgba(255, 255, 255, 0.1);
-  font-size: 0.86rem;
+  font-size: 0.8rem;
 }
 
 .winner-row td {
@@ -497,8 +497,8 @@ thead th:first-child,
 
   .player-chip {
     grid-template-columns: 20px minmax(0, 1fr) auto;
-    min-height: 28px;
-    padding: 3px 4px;
+    min-height: 26px;
+    padding: 2px 4px;
   }
 
   .player-slot {
@@ -513,15 +513,15 @@ thead th:first-child,
   .score-button,
   .score-value,
   .score-open {
-    font-size: 0.84rem;
+    font-size: 0.78rem;
   }
 
   th {
-    font-size: 0.68rem;
+    font-size: 0.64rem;
   }
 
   .section-row td {
-    font-size: 0.6rem;
+    font-size: 0.56rem;
   }
 
   .score-cell.stagger-left .score-button.is-active,
@@ -547,12 +547,12 @@ thead th:first-child,
 
   .die,
   .roll-button {
-    min-height: 42px;
+    min-height: 39px;
   }
 
   th,
   td {
-    padding: 5px 5px;
+    padding: 4px 5px;
   }
 }
 

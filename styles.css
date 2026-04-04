@@ -1,18 +1,18 @@
 :root {
   color-scheme: light;
-  --bg: #f3e4c1;
-  --bg-deep: #d6bd97;
-  --panel: rgba(255, 250, 241, 0.94);
-  --line: rgba(43, 30, 21, 0.12);
-  --text: #241913;
-  --muted: #6b5748;
-  --green: #1f6b52;
-  --green-deep: #134a39;
-  --coral: #db6b49;
-  --sky: #7bc5d7;
-  --gold: #d7b060;
-  --cream: #fffaf1;
-  --shadow: 0 14px 28px rgba(51, 35, 23, 0.1);
+  --bg: #1c1642;
+  --bg-deep: #09061b;
+  --panel: rgba(18, 22, 50, 0.84);
+  --line: rgba(255, 255, 255, 0.14);
+  --text: #fff7ef;
+  --muted: #d9d0ef;
+  --green: #ff6b35;
+  --green-deep: #d9471a;
+  --coral: #ffb703;
+  --sky: #5eead4;
+  --gold: #ffd166;
+  --cream: #241b55;
+  --shadow: 0 18px 36px rgba(0, 0, 0, 0.28);
   --radius-xl: 18px;
   --radius-lg: 14px;
   --radius-md: 10px;
@@ -32,9 +32,10 @@ body {
   min-height: 100dvh;
   overflow: hidden;
   background:
-    radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.78), transparent 32%),
-    radial-gradient(circle at 85% 18%, rgba(123, 197, 215, 0.24), transparent 22%),
-    radial-gradient(circle at 20% 90%, rgba(219, 107, 73, 0.14), transparent 28%),
+    radial-gradient(circle at 12% 5%, rgba(255, 183, 3, 0.38), transparent 28%),
+    radial-gradient(circle at 88% 12%, rgba(94, 234, 212, 0.26), transparent 24%),
+    radial-gradient(circle at 18% 90%, rgba(255, 107, 53, 0.24), transparent 32%),
+    radial-gradient(circle at 80% 82%, rgba(127, 90, 240, 0.22), transparent 30%),
     linear-gradient(180deg, var(--bg), var(--bg-deep));
   color: var(--text);
   font-family: "Avenir Next", "Trebuchet MS", sans-serif;
@@ -57,11 +58,36 @@ input {
 
 .panel {
   background: var(--panel);
-  border: 1px solid rgba(255, 255, 255, 0.62);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: var(--radius-xl);
   box-shadow: var(--shadow);
   -webkit-backdrop-filter: blur(10px);
   backdrop-filter: blur(10px);
+}
+
+.top-strip {
+  background: linear-gradient(135deg, rgba(255, 107, 53, 0.28), rgba(94, 234, 212, 0.16));
+}
+
+.dice-strip {
+  background: linear-gradient(135deg, rgba(255, 183, 3, 0.18), rgba(255, 107, 53, 0.14));
+}
+
+.status-strip {
+  background: linear-gradient(135deg, rgba(94, 234, 212, 0.16), rgba(127, 90, 240, 0.12));
+}
+
+.build-badge {
+  grid-column: 1 / -1;
+  padding: 4px 10px;
+  border-radius: 999px;
+  justify-self: start;
+  background: linear-gradient(90deg, var(--coral), var(--green));
+  color: #2b1606;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
 }
 
 .top-strip,
@@ -85,13 +111,13 @@ input {
   min-height: 38px;
   padding: 6px 8px;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.66);
-  border: 1px solid rgba(43, 30, 21, 0.08);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .player-chip.is-active {
-  background: linear-gradient(180deg, rgba(31, 107, 82, 0.14), rgba(31, 107, 82, 0.2));
-  border-color: rgba(31, 107, 82, 0.28);
+  background: linear-gradient(180deg, rgba(255, 107, 53, 0.28), rgba(255, 183, 3, 0.2));
+  border-color: rgba(255, 209, 102, 0.34);
 }
 
 .player-slot {
@@ -100,8 +126,8 @@ input {
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: rgba(31, 107, 82, 0.12);
-  color: var(--green-deep);
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff6df;
   font-size: 0.72rem;
   font-weight: 700;
 }
@@ -149,9 +175,9 @@ input {
 }
 
 .secondary-button {
-  background: rgba(255, 255, 255, 0.74);
+  background: rgba(255, 255, 255, 0.14);
   color: var(--text);
-  border: 1px solid rgba(43, 30, 21, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .compact-button {
@@ -193,9 +219,9 @@ input {
   display: grid;
   place-items: center;
   border-radius: 14px;
-  background: linear-gradient(180deg, #fffef8, #f1e3cb);
-  border: 1px solid rgba(43, 30, 21, 0.08);
-  box-shadow: inset 0 -6px 12px rgba(215, 176, 96, 0.14);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(94, 234, 212, 0.14));
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  box-shadow: inset 0 -6px 12px rgba(94, 234, 212, 0.16);
 }
 
 .die.is-held {
@@ -224,7 +250,7 @@ input {
   min-height: 34px;
   padding: 6px 8px;
   border-radius: var(--radius-md);
-  background: rgba(255, 255, 255, 0.66);
+  background: rgba(255, 255, 255, 0.1);
 }
 
 .status-pill span {
@@ -260,8 +286,8 @@ input {
   margin: 0 4px;
   padding: 6px 8px;
   border-radius: var(--radius-md);
-  background: rgba(143, 74, 24, 0.12);
-  color: #6f3f18;
+  background: rgba(255, 183, 3, 0.18);
+  color: #fff0c7;
   font-size: 0.78rem;
   line-height: 1.2;
 }
@@ -327,7 +353,7 @@ input {
   height: 100%;
   overflow: hidden;
   border-radius: var(--radius-lg);
-  background: rgba(255, 255, 255, 0.56);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 table {
@@ -368,7 +394,7 @@ thead th:first-child,
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
-  background: rgba(255, 250, 241, 0.68);
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .category-label {
@@ -393,8 +419,8 @@ thead th:first-child,
 }
 
 .score-button {
-  background: rgba(31, 107, 82, 0.12);
-  color: var(--green-deep);
+  background: rgba(255, 255, 255, 0.16);
+  color: #fff2de;
 }
 
 .score-button.is-active {
@@ -403,17 +429,17 @@ thead th:first-child,
 }
 
 .score-value {
-  background: rgba(215, 176, 96, 0.16);
+  background: rgba(255, 183, 3, 0.18);
 }
 
 .score-open {
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 0.08);
   color: var(--muted);
 }
 
 .totals-row td,
 .winner-row td {
-  background: rgba(255, 252, 246, 0.84);
+  background: rgba(255, 255, 255, 0.1);
   font-size: 0.74rem;
 }
 

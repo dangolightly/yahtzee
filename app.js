@@ -206,6 +206,7 @@ let completedResetHandle = null;
 let completedResetPending = false;
 let nameEntryModalVisible = false;
 let challengerModalVisible = false;
+let enableOnlinePromise = null;
 
 function getCounts(dice) {
   return dice.reduce((counts, value) => {
@@ -873,7 +874,7 @@ async function submitNameEntry() {
     }
   }
 
-  submitProfileUpdate();
+  await submitProfileUpdate();
 }
 
 async function joinOnlineGame(gameId) {
@@ -950,23 +951,33 @@ async function resetCompletedOnlineState() {
 }
 
 async function tryEnableOnlineMode() {
-  try {
-    const snapshot = await fetchJson(`/api/session?clientId=${encodeURIComponent(session.clientId)}`);
-    applyOnlineSnapshot(snapshot);
-    startSessionPolling();
-  } catch {
-    session.mode = "offline";
-    session.role = null;
-    session.playerIndex = null;
-    session.phase = "offline";
-    session.notice = "";
-  session.waitingGames = [];
-  session.currentGameId = null;
-  session.disconnectSent = false;
-  session.submittingName = false;
-  session.joiningGameId = null;
-  render();
+  if (enableOnlinePromise) {
+    return enableOnlinePromise;
   }
+
+  enableOnlinePromise = (async () => {
+    try {
+      const snapshot = await fetchJson(`/api/session?clientId=${encodeURIComponent(session.clientId)}`);
+      applyOnlineSnapshot(snapshot);
+      startSessionPolling();
+    } catch {
+      session.mode = "offline";
+      session.role = null;
+      session.playerIndex = null;
+      session.phase = "offline";
+      session.notice = "";
+      session.waitingGames = [];
+      session.currentGameId = null;
+      session.disconnectSent = false;
+      session.submittingName = false;
+      session.joiningGameId = null;
+      render();
+    } finally {
+      enableOnlinePromise = null;
+    }
+  })();
+
+  return enableOnlinePromise;
 }
 
 els.rollButton.addEventListener("click", () => {
@@ -1113,7 +1124,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=38").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=39").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

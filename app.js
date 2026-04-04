@@ -1,8 +1,8 @@
 const STORAGE_KEY = "yahtzee-state-v2";
 const CLIENT_ID_KEY = "yahtzee-client-id-v2";
 const PROFILE_NAME_KEY = "yahtzee-profile-name-v1";
+const CHALLENGER_LIST_OPEN_KEY = "yahtzee-challenger-open-v1";
 const TUTORIAL_DONE_KEY = "yahtzee-tutorial-done-v1";
-const FUN_MODE_KEY = "yahtzee-fun-mode-v1";
 const FUN_CONFIG_URL = "./yahtzee-fun-config.json";
 const SESSION_POLL_MS = 4000;
 
@@ -42,7 +42,6 @@ const els = {
   playerOneHeading: document.querySelector("#player-one-heading"),
   playerTwoHeading: document.querySelector("#player-two-heading"),
   newGameButton: document.querySelector("#new-game-button"),
-  funToggleButton: document.querySelector("#fun-toggle-button"),
   rollButton: document.querySelector("#roll-button"),
   lobbyPanel: document.querySelector("#lobby-panel"),
   lobbyCopy: document.querySelector("#lobby-copy"),
@@ -218,19 +217,22 @@ const session = {
   reconnecting: false,
   waitingGames: [],
   currentGameId: null,
+  showChallengerList: readSessionValue(CHALLENGER_LIST_OPEN_KEY) === "1",
   disconnectSent: false,
+  newGamePending: false,
+  newGamePendingLabel: "",
 };
 
 const tutorialSteps = [
   {
     title: "Enter your name",
-    text: "Type your name in Player 1, then press Enter.",
+    text: "Type your name in Player 1.",
     target: () => els.playerOneChip,
   },
   {
-    title: "Choose a challenger",
-    text: "Use Challenger List to choose who you want to play.",
-    target: () => els.queueSection,
+    title: "Start a new game",
+    text: "Tap New Game to open the Challenger List.",
+    target: () => els.newGameButton,
   },
 ];
 
@@ -241,7 +243,6 @@ const tutorial = {
 };
 
 const funMode = {
-  enabled: readLocalValue(FUN_MODE_KEY) !== "0",
   config: null,
 };
 
@@ -397,12 +398,13 @@ function hasAcceptedName() {
   return isOnlineMode() && ["waiting", "active", "completed"].includes(session.phase);
 }
 
-function isTutorialEligible() {
-  return !tutorial.dismissed && isOnlineMode() && session.phase !== "active" && session.phase !== "completed";
+function setChallengerListOpen(isOpen) {
+  session.showChallengerList = Boolean(isOpen);
+  writeSessionValue(CHALLENGER_LIST_OPEN_KEY, session.showChallengerList ? "1" : "0");
 }
 
-function isTutorialChallengerStep() {
-  return tutorial.active && tutorial.stepIndex === 1;
+function isTutorialEligible() {
+  return !tutorial.dismissed && isOnlineMode() && session.phase !== "active" && session.phase !== "completed";
 }
 
 function isDefaultWinActive() {
@@ -469,38 +471,37 @@ function renderLobby() {
 
   els.lobbyPanel.hidden = false;
   const accepted = hasAcceptedName();
-  const showingTutorialChallenger = isTutorialChallengerStep();
-  els.queueSection.hidden = !accepted && !showingTutorialChallenger;
+  const showingChallengerList = accepted && session.showChallengerList;
+  els.queueSection.hidden = !showingChallengerList;
 
   if (!accepted) {
-    if (showingTutorialChallenger) {
-      els.lobbyCopy.textContent = "Challenger List appears here right after your name is accepted.";
-      els.lobbyCopy.hidden = false;
-      els.queueList.innerHTML = '<p class="queue-empty">Choose a challenger here to start your game.</p>';
-      return;
-    }
-
-    els.lobbyCopy.textContent = session.notice
-      || (session.reconnecting
-        ? "Trying to reconnect..."
-        : session.profileName
-        ? "Step 1: Press Enter on your name in Player 1 to open the challenger list."
-        : "Step 1: Type your name in Player 1, then press Enter to open the challenger list.");
+    els.lobbyCopy.textContent = session.notice || (session.reconnecting
+      ? "Trying to reconnect..."
+      : "Enter your name, then tap New Game.");
     els.lobbyCopy.hidden = !els.lobbyCopy.textContent;
+    els.queueList.innerHTML = "";
+    return;
+  }
+
+  if (!showingChallengerList) {
+    els.lobbyCopy.textContent = session.notice || (session.reconnecting
+      ? "Trying to reconnect..."
+      : "Tap New Game to open the Challenger List.");
+    els.lobbyCopy.hidden = false;
     els.queueList.innerHTML = "";
     return;
   }
 
   if (session.waitingGames.length === 0) {
     els.lobbyCopy.textContent = session.notice
-      || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Choose a challenger below. If the list is empty, stay here and it will update.");
+      || (session.reconnecting ? "Trying to reconnect..." : "Waiting for challengers. This list updates automatically.");
     els.lobbyCopy.hidden = false;
     els.queueList.innerHTML = '<p class="queue-empty">No challengers available yet. Waiting for one to appear...</p>';
     return;
   }
 
   els.lobbyCopy.textContent = session.notice
-    || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Tap a challenger below to start.");
+    || (session.reconnecting ? "Trying to reconnect..." : "Choose a challenger below.");
   els.lobbyCopy.hidden = false;
 
   els.queueList.innerHTML = session.waitingGames.map((game, index) => `
@@ -622,6 +623,7 @@ function renderStatus() {
   const ownedSeat = isOnlineMode() && session.phase === "active" ? session.playerIndex : null;
   const online = isOnlineMode();
   const accepted = hasAcceptedName();
+  const nameReady = session.profileName.trim().length > 0;
   const rollsLeft = isGameOver() ? 0 : state.rollsLeft;
   const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
   const isMyTurn = isOnlineActiveTurn && ownedSeat === state.currentPlayer;
@@ -643,12 +645,13 @@ function renderStatus() {
   els.playerOneChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
   els.playerTwoChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
 
-  els.playerOneInput.placeholder = online && !accepted ? "Enter your name here" : "";
+  els.playerOneInput.placeholder = online && !accepted ? "Enter your name" : "";
   els.playerTwoInput.placeholder = "";
   els.playerOneInput.disabled = online && accepted;
   els.playerTwoInput.disabled = online;
-  els.newGameButton.disabled = online ? !(session.phase === "active" || session.phase === "completed") : false;
-  renderFunToggle();
+  els.newGameButton.textContent = session.newGamePending ? (session.newGamePendingLabel || "Working...") : (online ? "New Game" : "New");
+  els.newGameButton.disabled = online ? (session.newGamePending || (!accepted && !nameReady)) : false;
+  els.newGameButton.classList.toggle("is-new-game-ready", online && !accepted && nameReady && !session.newGamePending);
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
   els.rollButton.classList.toggle("is-your-turn", isMyTurn);
   els.rollButton.classList.toggle("is-their-turn", isOnlineActiveTurn && !isMyTurn);
@@ -757,7 +760,7 @@ function getFunIndicator(indicatorId) {
 }
 
 function triggerFunMoment(categoryKey) {
-  if (!funMode.enabled || !funMode.config || !els.funFlash || !isConfigEnabled(funMode.config?.enabled, true)) {
+  if (!funMode.config || !els.funFlash || !isConfigEnabled(funMode.config?.enabled, true)) {
     return;
   }
 
@@ -798,32 +801,6 @@ function triggerFunMoment(categoryKey) {
   funFlashHandle = window.setTimeout(() => {
     clearFunFlash();
   }, 5000);
-}
-
-function renderFunToggle() {
-  if (!els.funToggleButton) {
-    return;
-  }
-
-  const configEnabled = isConfigEnabled(funMode.config?.enabled, true);
-  els.funToggleButton.disabled = !configEnabled;
-  if (!configEnabled) {
-    els.funToggleButton.textContent = "Fun Off";
-    els.funToggleButton.setAttribute("aria-pressed", "false");
-    els.funToggleButton.classList.remove("is-on");
-    els.funToggleButton.classList.add("is-off");
-    clearFunFlash();
-    return;
-  }
-
-  els.funToggleButton.textContent = funMode.enabled ? "Fun On" : "Fun Off";
-  els.funToggleButton.setAttribute("aria-pressed", funMode.enabled ? "true" : "false");
-  els.funToggleButton.classList.toggle("is-on", funMode.enabled);
-  els.funToggleButton.classList.toggle("is-off", !funMode.enabled);
-
-  if (!funMode.enabled) {
-    clearFunFlash();
-  }
 }
 
 async function loadFunConfig() {
@@ -1051,6 +1028,9 @@ function applyOnlineSnapshot(snapshot) {
   session.disconnectSent = false;
   session.waitingGames = snapshot.lobby?.waitingGames || [];
   session.currentGameId = snapshot.game?.id || snapshot.lobby?.currentGameId || null;
+  if (["lobby", "active", "completed"].includes(session.phase)) {
+    setChallengerListOpen(false);
+  }
   if (typeof snapshot.profileName === "string") {
     const nextProfileName = snapshot.profileName.trim() ? snapshot.profileName.slice(0, 24) : session.profileName;
     session.profileName = nextProfileName;
@@ -1081,12 +1061,12 @@ async function syncOnlineState() {
 
 async function submitProfileUpdate() {
   if (!isOnlineMode()) {
-    return;
+    return false;
   }
 
   if (!session.profileName.trim() && !hasAcceptedName()) {
     render();
-    return;
+    return false;
   }
 
   try {
@@ -1095,6 +1075,7 @@ async function submitProfileUpdate() {
       body: JSON.stringify({ clientId: session.clientId, name: session.profileName }),
     });
     applyOnlineSnapshot(snapshot);
+    return true;
   } catch (error) {
     if (error.payload?.snapshot) {
       applyOnlineSnapshot(error.payload.snapshot);
@@ -1104,6 +1085,7 @@ async function submitProfileUpdate() {
       session.notice = error.message || "Could not update your name.";
       render();
     }
+    return false;
   }
 }
 
@@ -1140,6 +1122,7 @@ async function submitOnlineAction(type, payload = {}, options = {}) {
         // Presentation-only callback; ignore failures.
       }
     }
+    return true;
   } catch (error) {
     if (error.payload?.snapshot) {
       applyOnlineSnapshot(error.payload.snapshot);
@@ -1147,7 +1130,58 @@ async function submitOnlineAction(type, payload = {}, options = {}) {
       session.notice = error.message || "Online action failed.";
       render();
     }
+    return false;
   }
+}
+
+async function handleOnlineNewGameClick() {
+  if (!isOnlineMode() || session.newGamePending) {
+    return;
+  }
+
+  const accepted = hasAcceptedName();
+  const trimmedName = session.profileName.trim();
+
+  if (!accepted) {
+    if (!trimmedName) {
+      session.notice = "Enter your name first.";
+      render();
+      els.playerOneInput.focus();
+      return;
+    }
+
+    session.newGamePending = true;
+    session.newGamePendingLabel = "Opening...";
+    session.notice = "";
+    render();
+    const profileAccepted = await submitProfileUpdate();
+    session.newGamePending = false;
+    session.newGamePendingLabel = "";
+    if (profileAccepted && hasAcceptedName()) {
+      setChallengerListOpen(true);
+    }
+    render();
+    return;
+  }
+
+  if (session.phase === "active" || session.phase === "completed") {
+    if (!window.confirm("Start a new game now? This will abandon the current game and give your challenger a default win.")) {
+      return;
+    }
+
+    session.newGamePending = true;
+    session.newGamePendingLabel = "Abandoning...";
+    render();
+    await submitOnlineAction("newGame");
+    session.newGamePending = false;
+    session.newGamePendingLabel = "";
+    render();
+    return;
+  }
+
+  setChallengerListOpen(true);
+  session.notice = "";
+  render();
 }
 
 async function resetCompletedOnlineState() {
@@ -1206,24 +1240,20 @@ els.rollButton.addEventListener("click", () => {
 
 els.newGameButton.addEventListener("click", () => {
   if (isOnlineMode()) {
-    submitOnlineAction("newGame");
+    handleOnlineNewGameClick();
     return;
   }
 
   resetGameLocal();
 });
 
-els.funToggleButton.addEventListener("click", () => {
-  funMode.enabled = !funMode.enabled;
-  writeLocalValue(FUN_MODE_KEY, funMode.enabled ? "1" : "0");
-  render();
-});
-
 els.playerOneInput.addEventListener("change", (event) => {
   if (isOnlineMode()) {
     if (!hasAcceptedName()) {
       session.profileName = String(event.target.value || "").slice(0, 24);
-      submitProfileUpdate();
+      saveProfileName(session.profileName);
+      session.notice = "";
+      render();
     }
     return;
   }
@@ -1243,7 +1273,9 @@ els.playerOneInput.addEventListener("blur", (event) => {
   if (isOnlineMode()) {
     if (!hasAcceptedName()) {
       session.profileName = String(event.target.value || "").slice(0, 24);
-      submitProfileUpdate();
+      saveProfileName(session.profileName);
+      session.notice = "";
+      render();
     }
     return;
   }
@@ -1328,7 +1360,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=51").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=52").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.
@@ -1368,6 +1400,7 @@ els.playerOneInput.addEventListener("input", (event) => {
   }
 
   session.profileName = String(event.target.value || "").slice(0, 24);
+  saveProfileName(session.profileName);
   session.notice = "";
   render();
 });
@@ -1378,7 +1411,7 @@ els.playerOneInput.addEventListener("keydown", (event) => {
   }
 
   event.preventDefault();
-  event.target.blur();
+  handleOnlineNewGameClick();
 });
 
 render();

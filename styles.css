@@ -230,7 +230,7 @@ input {
 
 .player-strip {
   display: grid;
-  grid-template-columns: 1fr 1fr 56px 72px;
+  grid-template-columns: 1fr 1fr 98px;
   gap: 4px;
 }
 
@@ -369,22 +369,12 @@ input {
   min-width: 58px;
 }
 
-.fun-toggle-button {
-  min-width: 72px;
-  font-size: 0.72rem;
-  letter-spacing: 0.02em;
-}
-
-.fun-toggle-button.is-on {
-  background: linear-gradient(180deg, rgba(143, 220, 138, 0.95), rgba(76, 168, 111, 0.95));
-  color: #102f48;
-  border-color: rgba(191, 242, 183, 0.76);
-}
-
-.fun-toggle-button.is-off {
-  background: linear-gradient(180deg, rgba(84, 90, 102, 0.96), rgba(46, 50, 58, 0.98));
-  color: #ffffff;
-  border-color: rgba(255, 255, 255, 0.22);
+.secondary-button.is-new-game-ready {
+  background: linear-gradient(180deg, #bff2b7, #8fdc8a 58%, #4ca86f);
+  color: #16395d;
+  border-color: rgba(191, 242, 183, 0.9);
+  box-shadow: 0 10px 22px rgba(76, 168, 111, 0.32);
+  animation: new-game-pulse 1.1s ease-in-out infinite alternate;
 }
 
 .primary-button:hover,
@@ -653,6 +643,17 @@ input {
   }
 }
 
+@keyframes new-game-pulse {
+  from {
+    transform: translateY(0);
+    box-shadow: 0 10px 22px rgba(76, 168, 111, 0.24);
+  }
+  to {
+    transform: translateY(-1px);
+    box-shadow: 0 14px 28px rgba(76, 168, 111, 0.42);
+  }
+}
+
 @keyframes flash-glitch {
   0% {
     transform: translate(-50%, -50%) rotate(45deg);
@@ -848,7 +849,7 @@ thead th:first-child,
   }
 
   .player-strip {
-    grid-template-columns: 1fr 1fr 52px 66px;
+    grid-template-columns: 1fr 1fr 92px;
   }
 
   .player-chip {
@@ -874,11 +875,6 @@ thead th:first-child,
   .player-chip input {
     font-size: 16px;
     line-height: 1.1;
-  }
-
-  .fun-toggle-button {
-    min-width: 66px;
-    font-size: 0.66rem;
   }
 
   th {

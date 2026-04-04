@@ -646,25 +646,6 @@ function takeScoreFor(clientId, categoryKey) {
   return true;
 }
 
-function resetCurrentGame(clientId) {
-  const membership = findMembership(clientId);
-  if (!membership) {
-    return false;
-  }
-
-  const { game } = membership;
-  if (!game.players[0] || !game.players[1]) {
-    return false;
-  }
-
-  game.state = createGameState([game.players[0].name, game.players[1].name]);
-  game.status = "active";
-  game.notice = "";
-  game.completedAt = null;
-  touchGame(game);
-  return true;
-}
-
 function sendJson(response, statusCode, payload) {
   response.writeHead(statusCode, {
     "Content-Type": "application/json; charset=utf-8",
@@ -834,7 +815,7 @@ async function handleApi(request, response, url) {
       } else if (type === "takeScore") {
         success = takeScoreFor(clientId, String(body.categoryKey || ""));
       } else if (type === "newGame") {
-        success = resetCurrentGame(clientId);
+        success = leaveCurrentGame(clientId).ok;
       }
 
       if (!success) {

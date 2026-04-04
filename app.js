@@ -694,6 +694,44 @@ function renderStatus() {
   }
 }
 
+function isConfigEnabled(value, defaultValue = true) {
+  if (value === undefined || value === null) {
+    return defaultValue;
+  }
+
+  if (typeof value === "boolean") {
+    return value;
+  }
+
+  const normalized = String(value).trim().toLowerCase();
+  if (!normalized) {
+    return defaultValue;
+  }
+
+  return !["off", "false", "0", "disabled", "no"].includes(normalized);
+}
+
+function getEnabledIndicators() {
+  const indicators = Array.isArray(funMode.config?.displayIndicators) ? funMode.config.displayIndicators : [];
+  return indicators.filter((indicator) => isConfigEnabled(indicator?.enabled, true));
+}
+
+function getScoreFunConfig(categoryKey) {
+  const raw = funMode.config?.scores?.[categoryKey];
+  if (Array.isArray(raw)) {
+    return { enabled: true, choices: raw };
+  }
+
+  if (raw && typeof raw === "object") {
+    return {
+      enabled: isConfigEnabled(raw.enabled, true),
+      choices: Array.isArray(raw.choices) ? raw.choices : [],
+    };
+  }
+
+  return { enabled: false, choices: [] };
+}
+
 function clearFunFlash() {
   if (funFlashHandle) {
     window.clearTimeout(funFlashHandle);
@@ -710,8 +748,8 @@ function clearFunFlash() {
 
 function getFunIndicator(indicatorId) {
   const fallback = { id: "spark", label: "Party mode", emoji: "🎲" };
-  const indicators = funMode.config?.displayIndicators;
-  if (!Array.isArray(indicators) || indicators.length === 0) {
+  const indicators = getEnabledIndicators();
+  if (!indicators.length) {
     return fallback;
   }
 
@@ -719,12 +757,17 @@ function getFunIndicator(indicatorId) {
 }
 
 function triggerFunMoment(categoryKey) {
-  if (!funMode.enabled || !funMode.config || !els.funFlash) {
+  if (!funMode.enabled || !funMode.config || !els.funFlash || !isConfigEnabled(funMode.config?.enabled, true)) {
     return;
   }
 
-  const choices = funMode.config?.scores?.[categoryKey];
-  if (!Array.isArray(choices) || choices.length === 0) {
+  const scoreConfig = getScoreFunConfig(categoryKey);
+  if (!scoreConfig.enabled) {
+    return;
+  }
+
+  const choices = scoreConfig.choices.filter((choice) => isConfigEnabled(choice?.enabled, true));
+  if (!choices.length) {
     return;
   }
 
@@ -759,6 +802,17 @@ function triggerFunMoment(categoryKey) {
 
 function renderFunToggle() {
   if (!els.funToggleButton) {
+    return;
+  }
+
+  const configEnabled = isConfigEnabled(funMode.config?.enabled, true);
+  els.funToggleButton.disabled = !configEnabled;
+  if (!configEnabled) {
+    els.funToggleButton.textContent = "Fun Off";
+    els.funToggleButton.setAttribute("aria-pressed", "false");
+    els.funToggleButton.classList.remove("is-on");
+    els.funToggleButton.classList.add("is-off");
+    clearFunFlash();
     return;
   }
 
@@ -1274,7 +1328,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=47").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=48").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

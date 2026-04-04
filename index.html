@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=43" />
+    <link rel="stylesheet" href="styles.css?v=44" />
   </head>
   <body>
     <div class="app-shell">
@@ -41,6 +41,18 @@
         </div>
       </section>
 
+      <section id="tutorial-overlay" class="tutorial-overlay" hidden>
+        <div id="tutorial-bubble" class="tutorial-bubble" role="dialog" aria-modal="true" aria-labelledby="tutorial-title">
+          <p id="tutorial-step" class="tutorial-step"></p>
+          <h2 id="tutorial-title" class="tutorial-title"></h2>
+          <p id="tutorial-text" class="tutorial-text"></p>
+          <div class="tutorial-actions">
+            <button id="tutorial-skip" class="secondary-button compact-button" type="button">Skip tutorial</button>
+            <button id="tutorial-next" class="primary-button compact-button" type="button">Next</button>
+          </div>
+        </div>
+      </section>
+
       <p id="session-banner" class="session-banner" hidden></p>
 
       <section class="dice-strip panel" aria-label="Dice tray">
@@ -61,7 +73,7 @@
           <table>
             <thead>
               <tr>
-                <th>Category <span class="category-version">(Version 1.8)</span></th>
+                <th>Category <span class="category-version">(Version 1.9)</span></th>
                 <th id="player-one-heading">Player 1</th>
                 <th id="player-two-heading">Player 2</th>
               </tr>
@@ -79,6 +91,6 @@
       </button>
     </template>
 
-    <script type="module" src="app.js?v=43"></script>
+    <script type="module" src="app.js?v=44"></script>
   </body>
 </html>

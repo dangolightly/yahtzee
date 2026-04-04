@@ -163,6 +163,60 @@ input {
   font-size: 0.8rem;
 }
 
+.tutorial-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  background: rgba(4, 8, 24, 0.08);
+  pointer-events: auto;
+}
+
+.tutorial-bubble {
+  position: fixed;
+  z-index: 61;
+  width: min(92vw, 320px);
+  padding: 12px;
+  border-radius: 14px;
+  border: 1px solid rgba(255, 209, 102, 0.72);
+  background: linear-gradient(155deg, rgba(13, 21, 49, 0.98), rgba(25, 18, 57, 0.98));
+  box-shadow: 0 18px 38px rgba(0, 0, 0, 0.42);
+  pointer-events: auto;
+}
+
+.tutorial-step {
+  margin: 0 0 3px;
+  color: #ffd166;
+  font-size: 0.66rem;
+  font-weight: 800;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.tutorial-title {
+  margin: 0;
+  font-size: 1.1rem;
+  font-family: "Baskerville", "Georgia", serif;
+}
+
+.tutorial-text {
+  margin: 6px 0 10px;
+  color: #f5f8fc;
+  font-size: 0.9rem;
+  line-height: 1.34;
+}
+
+.tutorial-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.is-tutorial-focus {
+  position: relative;
+  z-index: 52;
+  box-shadow: 0 0 0 2px rgba(255, 209, 102, 0.55), 0 0 20px rgba(255, 209, 102, 0.3);
+}
+
 .top-strip,
 .dice-strip,
 .scoreboard-panel {
@@ -642,19 +696,13 @@ thead th:first-child,
   color: #16395d;
 }
 
-.score-button.is-active {
+.score-button.is-active,
+.score-button.is-scratch {
   background: linear-gradient(180deg, #2f63c8, #163d87 56%, #081b49);
   color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.72);
   box-shadow: inset 0 0 0 1px rgba(191, 242, 183, 0.58), 0 0 0 2px rgba(12, 21, 47, 0.34), 0 10px 18px rgba(8, 18, 43, 0.36);
   text-shadow: 0 1px 0 rgba(0, 0, 0, 0.22);
-}
-
-.score-button.is-scratch {
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.14), rgba(255, 255, 255, 0.08));
-  color: #fff7ef;
-  border: 1px dashed rgba(255, 255, 255, 0.32);
-  box-shadow: none;
 }
 
 .score-cell.stagger-left .score-button.is-active,

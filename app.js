@@ -1,6 +1,7 @@
 const STORAGE_KEY = "yahtzee-state-v2";
 const CLIENT_ID_KEY = "yahtzee-client-id-v2";
 const PROFILE_NAME_KEY = "yahtzee-profile-name-v1";
+const TUTORIAL_DONE_KEY = "yahtzee-tutorial-done-v1";
 const SESSION_POLL_MS = 4000;
 
 const categories = [
@@ -46,6 +47,13 @@ const els = {
   lobbyCopy: document.querySelector("#lobby-copy"),
   queueSection: document.querySelector("#queue-section"),
   queueList: document.querySelector("#queue-list"),
+  tutorialOverlay: document.querySelector("#tutorial-overlay"),
+  tutorialBubble: document.querySelector("#tutorial-bubble"),
+  tutorialStep: document.querySelector("#tutorial-step"),
+  tutorialTitle: document.querySelector("#tutorial-title"),
+  tutorialText: document.querySelector("#tutorial-text"),
+  tutorialNext: document.querySelector("#tutorial-next"),
+  tutorialSkip: document.querySelector("#tutorial-skip"),
   sessionBanner: document.querySelector("#session-banner"),
   installWarning: document.querySelector("#install-warning"),
   winnerBanner: document.querySelector("#winner-banner"),
@@ -129,6 +137,22 @@ function loadState() {
   }
 }
 
+function readLocalValue(key) {
+  try {
+    return window.localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeLocalValue(key, value) {
+  try {
+    window.localStorage.setItem(key, value);
+  } catch {
+    // Local storage is best-effort only.
+  }
+}
+
 function saveState() {
   if (session.mode === "offline") {
     window.localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
@@ -193,8 +217,28 @@ const session = {
   disconnectSent: false,
 };
 
+const tutorialSteps = [
+  {
+    title: "Enter your name",
+    text: "Type your name in Player 1, then press Enter.",
+    target: () => els.playerOneChip,
+  },
+  {
+    title: "Choose a challenger",
+    text: "Use Challenger List to choose who you want to play.",
+    target: () => els.queueSection,
+  },
+];
+
+const tutorial = {
+  dismissed: readLocalValue(TUTORIAL_DONE_KEY) === "1",
+  active: false,
+  stepIndex: 0,
+};
+
 let completedResetHandle = null;
 let completedResetPending = false;
+let highlightedTutorialTarget = null;
 
 function getCounts(dice) {
   return dice.reduce((counts, value) => {
@@ -343,6 +387,14 @@ function hasAcceptedName() {
   return isOnlineMode() && ["waiting", "active", "completed"].includes(session.phase);
 }
 
+function isTutorialEligible() {
+  return !tutorial.dismissed && isOnlineMode() && session.phase !== "active" && session.phase !== "completed";
+}
+
+function isTutorialChallengerStep() {
+  return tutorial.active && tutorial.stepIndex === 1;
+}
+
 function isDefaultWinActive() {
   return isOnlineMode() && session.phase === "completed" && !isGameOver();
 }
@@ -407,9 +459,17 @@ function renderLobby() {
 
   els.lobbyPanel.hidden = false;
   const accepted = hasAcceptedName();
-  els.queueSection.hidden = !accepted;
+  const showingTutorialChallenger = isTutorialChallengerStep();
+  els.queueSection.hidden = !accepted && !showingTutorialChallenger;
 
   if (!accepted) {
+    if (showingTutorialChallenger) {
+      els.lobbyCopy.textContent = "Challenger List appears here right after your name is accepted.";
+      els.lobbyCopy.hidden = false;
+      els.queueList.innerHTML = '<p class="queue-empty">Choose a challenger here to start your game.</p>';
+      return;
+    }
+
     els.lobbyCopy.textContent = session.notice
       || (session.reconnecting
         ? "Trying to reconnect..."
@@ -625,9 +685,108 @@ function renderStatus() {
   }
 }
 
+function clearTutorialHighlight() {
+  if (!highlightedTutorialTarget) {
+    return;
+  }
+
+  highlightedTutorialTarget.classList.remove("is-tutorial-focus");
+  highlightedTutorialTarget = null;
+}
+
+function setTutorialHighlight(target) {
+  if (highlightedTutorialTarget === target) {
+    return;
+  }
+
+  clearTutorialHighlight();
+  if (!target) {
+    return;
+  }
+
+  target.classList.add("is-tutorial-focus");
+  highlightedTutorialTarget = target;
+}
+
+function positionTutorialBubble(target) {
+  if (!target || els.tutorialOverlay.hidden) {
+    return;
+  }
+
+  const rect = target.getBoundingClientRect();
+  const bubbleRect = els.tutorialBubble.getBoundingClientRect();
+  const spacing = 14;
+  const viewportPadding = 10;
+  const preferAbove = rect.bottom > window.innerHeight * 0.58;
+  const topStart = preferAbove ? rect.top - bubbleRect.height - spacing : rect.bottom + spacing;
+  const leftStart = rect.left + rect.width / 2 - bubbleRect.width / 2;
+  const top = Math.max(viewportPadding, Math.min(topStart, window.innerHeight - bubbleRect.height - viewportPadding));
+  const left = Math.max(viewportPadding, Math.min(leftStart, window.innerWidth - bubbleRect.width - viewportPadding));
+
+  els.tutorialBubble.style.top = `${Math.round(top)}px`;
+  els.tutorialBubble.style.left = `${Math.round(left)}px`;
+  els.tutorialBubble.dataset.placement = preferAbove ? "top" : "bottom";
+}
+
+function dismissTutorial() {
+  tutorial.dismissed = true;
+  tutorial.active = false;
+  tutorial.stepIndex = 0;
+  writeLocalValue(TUTORIAL_DONE_KEY, "1");
+}
+
+function advanceTutorial() {
+  if (!tutorial.active) {
+    return;
+  }
+
+  if (tutorial.stepIndex >= tutorialSteps.length - 1) {
+    dismissTutorial();
+    render();
+    return;
+  }
+
+  tutorial.stepIndex += 1;
+  render();
+}
+
+function renderTutorial() {
+  if (!isTutorialEligible()) {
+    tutorial.active = false;
+    tutorial.stepIndex = 0;
+    els.tutorialOverlay.hidden = true;
+    clearTutorialHighlight();
+    return;
+  }
+
+  if (!tutorial.active) {
+    tutorial.active = true;
+    tutorial.stepIndex = 0;
+  }
+
+  if (tutorial.stepIndex === 0 && hasAcceptedName()) {
+    tutorial.stepIndex = 1;
+  }
+
+  const step = tutorialSteps[tutorial.stepIndex] || tutorialSteps[0];
+  const target = step.target();
+
+  els.tutorialOverlay.hidden = false;
+  els.tutorialStep.textContent = `Tip ${tutorial.stepIndex + 1} of ${tutorialSteps.length}`;
+  els.tutorialTitle.textContent = step.title;
+  els.tutorialText.textContent = step.text;
+  els.tutorialNext.textContent = tutorial.stepIndex === tutorialSteps.length - 1 ? "Done" : "Next";
+  setTutorialHighlight(target);
+
+  window.requestAnimationFrame(() => {
+    positionTutorialBubble(target);
+  });
+}
+
 function render() {
   renderLobby();
   renderStatus();
+  renderTutorial();
   renderDice();
   renderScoreboard();
   saveState();
@@ -962,9 +1121,33 @@ els.scoreboardBody.addEventListener("click", (event) => {
   takeScoreLocal(button.dataset.scoreCategory);
 });
 
+els.tutorialNext.addEventListener("click", (event) => {
+  event.preventDefault();
+  advanceTutorial();
+});
+
+els.tutorialSkip.addEventListener("click", (event) => {
+  event.preventDefault();
+  dismissTutorial();
+  render();
+});
+
+window.addEventListener("resize", () => {
+  if (!tutorial.active) {
+    return;
+  }
+
+  const step = tutorialSteps[tutorial.stepIndex];
+  if (!step) {
+    return;
+  }
+
+  positionTutorialBubble(step.target());
+});
+
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=43").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=44").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

@@ -136,23 +136,39 @@ function saveState() {
   }
 }
 
+function readSessionValue(key) {
+  try {
+    return window.sessionStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function writeSessionValue(key, value) {
+  try {
+    window.sessionStorage.setItem(key, value);
+  } catch {
+    // Session storage is best-effort for per-window identity.
+  }
+}
+
 function getOrCreateClientId() {
-  const existing = window.localStorage.getItem(CLIENT_ID_KEY);
+  const existing = readSessionValue(CLIENT_ID_KEY);
   if (existing) {
     return existing;
   }
 
   const nextId = window.crypto?.randomUUID ? window.crypto.randomUUID() : `client-${Date.now()}-${Math.random().toString(16).slice(2)}`;
-  window.localStorage.setItem(CLIENT_ID_KEY, nextId);
+  writeSessionValue(CLIENT_ID_KEY, nextId);
   return nextId;
 }
 
 function loadProfileName() {
-  return String(window.localStorage.getItem(PROFILE_NAME_KEY) || "").slice(0, 24);
+  return String(readSessionValue(PROFILE_NAME_KEY) || "").slice(0, 24);
 }
 
 function saveProfileName(name) {
-  window.localStorage.setItem(PROFILE_NAME_KEY, String(name || "").slice(0, 24));
+  writeSessionValue(PROFILE_NAME_KEY, String(name || "").slice(0, 24));
 }
 
 function updateInputValue(element, value) {
@@ -844,7 +860,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=27").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=28").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

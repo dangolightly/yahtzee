@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=30" />
+    <link rel="stylesheet" href="styles.css?v=32" />
   </head>
   <body>
     <div class="app-shell">
@@ -19,13 +19,13 @@
         <div class="player-strip">
           <label class="player-chip" id="player-one-chip">
             <span class="player-slot">1</span>
-            <input id="player-one-input" name="playerOne" maxlength="18" autocomplete="off" />
+            <input id="player-one-input" name="playerOne" maxlength="24" autocomplete="off" />
             <span id="player-one-seat-tag" class="seat-tag" hidden>You</span>
             <strong id="player-one-total">0</strong>
           </label>
           <label class="player-chip" id="player-two-chip">
             <span class="player-slot">2</span>
-            <input id="player-two-input" name="playerTwo" maxlength="18" autocomplete="off" />
+            <input id="player-two-input" name="playerTwo" maxlength="24" autocomplete="off" />
             <span id="player-two-seat-tag" class="seat-tag" hidden>You</span>
             <strong id="player-two-total">0</strong>
           </label>
@@ -34,13 +34,7 @@
       </section>
 
       <section id="lobby-panel" class="lobby-panel panel" hidden>
-        <div class="lobby-head">
-          <label class="name-field" for="display-name-input">
-            <span>Your name</span>
-            <input id="display-name-input" maxlength="24" autocomplete="name" />
-            <p id="lobby-copy" class="lobby-copy"></p>
-          </label>
-        </div>
+        <p id="lobby-copy" class="lobby-copy"></p>
         <div id="queue-section" class="queue-section" hidden>
           <p class="queue-heading">Challenger List</p>
           <div id="queue-list" class="queue-list"></div>
@@ -67,7 +61,7 @@
           <table>
             <thead>
               <tr>
-                <th>Category <span class="category-version">(Version 0.5)</span></th>
+                <th>Category <span class="category-version">(Version 0.7)</span></th>
                 <th id="player-one-heading">Player 1</th>
                 <th id="player-two-heading">Player 2</th>
               </tr>
@@ -85,6 +79,6 @@
       </button>
     </template>
 
-    <script type="module" src="app.js?v=30"></script>
+    <script type="module" src="app.js?v=32"></script>
   </body>
 </html>

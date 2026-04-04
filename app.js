@@ -43,7 +43,6 @@ const els = {
   newGameButton: document.querySelector("#new-game-button"),
   rollButton: document.querySelector("#roll-button"),
   lobbyPanel: document.querySelector("#lobby-panel"),
-  displayNameInput: document.querySelector("#display-name-input"),
   lobbyCopy: document.querySelector("#lobby-copy"),
   queueSection: document.querySelector("#queue-section"),
   queueList: document.querySelector("#queue-list"),
@@ -391,35 +390,33 @@ function renderLobby() {
   }
 
   els.lobbyPanel.hidden = false;
-  updateInputValue(els.displayNameInput, session.profileName);
   const accepted = hasAcceptedName();
-  els.queueSection.hidden = !accepted || session.phase !== "waiting";
+  els.queueSection.hidden = !accepted;
 
   if (!accepted) {
     els.lobbyCopy.textContent = session.notice
-      || (session.reconnecting ? "Trying to reconnect..." : "Enter your name and press Enter to see challengers.");
+      || (session.reconnecting ? "Trying to reconnect..." : "Enter your name here.");
     els.queueList.innerHTML = "";
     return;
   }
 
-  els.lobbyCopy.textContent = session.notice
-    || (session.reconnecting ? "Trying to reconnect..." : "Choose a challenger below.");
-
   if (session.waitingGames.length === 0) {
-    els.queueList.innerHTML = '<p class="queue-empty">No challengers waiting right now.</p>';
+    els.lobbyCopy.textContent = session.notice
+      || (session.reconnecting ? "Trying to reconnect..." : "Waiting for a challenger to become available.");
+    els.queueList.innerHTML = '<p class="queue-empty">No challengers yet. Waiting...</p>';
     return;
   }
 
+  els.lobbyCopy.textContent = session.notice
+    || (session.reconnecting ? "Trying to reconnect..." : "Tap a challenger to accept them.");
+
   els.queueList.innerHTML = session.waitingGames.map((game, index) => `
-    <div class="queue-card">
+    <button class="queue-card" type="button" data-join-game="${game.id}">
       <div>
         <strong>${index + 1}. ${game.hostName}</strong>
-        <span>Waiting now.</span>
+        <span>Tap to accept this challenger.</span>
       </div>
-      <button class="secondary-button compact-button" type="button" data-join-game="${game.id}">
-        Challenge
-      </button>
-    </div>
+    </button>
   `).join("");
 }
 
@@ -429,11 +426,13 @@ function renderDice() {
     const fragment = els.dieTemplate.content.cloneNode(true);
     const button = fragment.querySelector(".die");
     const valueEl = fragment.querySelector(".die-value");
+    const isOpenDie = !state.turnStarted;
     button.dataset.index = String(index);
     button.disabled = !state.turnStarted || state.rollsLeft === 3 || isGameOver() || !canCurrentClientAct();
     button.classList.toggle("is-held", state.held[index]);
+    button.classList.toggle("is-open", isOpenDie);
     button.setAttribute("aria-pressed", state.held[index] ? "true" : "false");
-    valueEl.textContent = String(value);
+    valueEl.textContent = isOpenDie ? "-" : String(value);
     els.diceGrid.appendChild(fragment);
   });
 }
@@ -529,12 +528,15 @@ function renderStatus() {
   const totals = state.players.map(getPlayerTotals);
   const ownedSeat = isOnlineMode() && session.phase === "active" ? session.playerIndex : null;
   const online = isOnlineMode();
+  const accepted = hasAcceptedName();
   const rollsLeft = isGameOver() ? 0 : state.rollsLeft;
   const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
   const isMyTurn = isOnlineActiveTurn && ownedSeat === state.currentPlayer;
+  const playerOneLabel = online && !accepted ? session.profileName : state.players[0].name;
+  const playerTwoLabel = online && !accepted ? "" : state.players[1].name;
 
-  updateInputValue(els.playerOneInput, state.players[0].name);
-  updateInputValue(els.playerTwoInput, state.players[1].name);
+  updateInputValue(els.playerOneInput, playerOneLabel);
+  updateInputValue(els.playerTwoInput, playerTwoLabel);
   els.playerOneHeading.textContent = `${state.players[0].name} (${totals[0].grandTotal})`;
   els.playerTwoHeading.textContent = `${state.players[1].name} (${totals[1].grandTotal})`;
   els.playerOneTotal.textContent = String(totals[0].grandTotal);
@@ -548,7 +550,9 @@ function renderStatus() {
   els.playerOneSeatTag.hidden = ownedSeat !== 0;
   els.playerTwoSeatTag.hidden = ownedSeat !== 1;
 
-  els.playerOneInput.disabled = online;
+  els.playerOneInput.placeholder = online && !accepted ? "Enter your name here" : "";
+  els.playerTwoInput.placeholder = "";
+  els.playerOneInput.disabled = online && accepted;
   els.playerTwoInput.disabled = online;
   els.newGameButton.disabled = online ? !(session.phase === "active" || session.phase === "completed") : false;
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
@@ -813,26 +817,15 @@ els.newGameButton.addEventListener("click", () => {
   resetGameLocal();
 });
 
-els.displayNameInput.addEventListener("input", (event) => {
-  session.profileName = String(event.target.value || "").slice(0, 24);
-  session.notice = "";
-  render();
-});
-
-els.displayNameInput.addEventListener("keydown", (event) => {
-  if (event.key !== "Enter") {
+els.playerOneInput.addEventListener("change", (event) => {
+  if (isOnlineMode()) {
+    if (!hasAcceptedName()) {
+      session.profileName = String(event.target.value || "").slice(0, 24);
+      submitProfileUpdate();
+    }
     return;
   }
 
-  event.preventDefault();
-  event.target.blur();
-});
-
-els.displayNameInput.addEventListener("blur", () => {
-  submitProfileUpdate();
-});
-
-els.playerOneInput.addEventListener("change", (event) => {
   if (!isOnlineMode()) {
     updatePlayerNameLocal(0, event.target.value);
   }
@@ -845,6 +838,14 @@ els.playerTwoInput.addEventListener("change", (event) => {
 });
 
 els.playerOneInput.addEventListener("blur", (event) => {
+  if (isOnlineMode()) {
+    if (!hasAcceptedName()) {
+      session.profileName = String(event.target.value || "").slice(0, 24);
+      submitProfileUpdate();
+    }
+    return;
+  }
+
   if (!isOnlineMode()) {
     updatePlayerNameLocal(0, event.target.value);
   }
@@ -910,6 +911,25 @@ window.addEventListener("pagehide", (event) => {
   }
 
   sendDisconnectSignal();
+});
+
+els.playerOneInput.addEventListener("input", (event) => {
+  if (!isOnlineMode() || hasAcceptedName()) {
+    return;
+  }
+
+  session.profileName = String(event.target.value || "").slice(0, 24);
+  session.notice = "";
+  render();
+});
+
+els.playerOneInput.addEventListener("keydown", (event) => {
+  if (!isOnlineMode() || hasAcceptedName() || event.key !== "Enter") {
+    return;
+  }
+
+  event.preventDefault();
+  event.target.blur();
 });
 
 render();

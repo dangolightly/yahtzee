@@ -91,19 +91,6 @@ input {
   background: linear-gradient(135deg, rgba(94, 234, 212, 0.12), rgba(47, 99, 200, 0.18));
 }
 
-.lobby-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr);
-  gap: 6px;
-  align-items: end;
-}
-
-.name-field {
-  display: grid;
-  gap: 4px;
-}
-
-.name-field span,
 .queue-heading {
   font-size: 0.66rem;
   letter-spacing: 0.12em;
@@ -111,17 +98,8 @@ input {
   color: var(--muted);
 }
 
-.name-field input {
-  min-height: 32px;
-  padding: 0 10px;
-  border-radius: 12px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
-  background: rgba(255, 255, 255, 0.08);
-  color: var(--text);
-}
-
 .lobby-copy {
-  margin: 2px 0 0;
+  margin: 0;
   color: var(--muted);
   font-size: 0.84rem;
   line-height: 1.3;
@@ -145,8 +123,8 @@ input {
 .queue-card,
 .queue-empty {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
   align-items: center;
   margin: 0;
   padding: 8px 10px;
@@ -155,8 +133,23 @@ input {
   border: 1px solid rgba(255, 255, 255, 0.1);
 }
 
-.queue-card.is-mine {
-  border-color: rgba(255, 209, 102, 0.38);
+.queue-card {
+  width: 100%;
+  font: inherit;
+  text-align: left;
+  color: var(--text);
+  cursor: pointer;
+  appearance: none;
+}
+
+.queue-card:hover {
+  border-color: rgba(191, 242, 183, 0.58);
+  box-shadow: 0 10px 20px rgba(47, 99, 200, 0.14);
+}
+
+.queue-card:focus-visible {
+  outline: 2px solid rgba(191, 242, 183, 0.85);
+  outline-offset: 2px;
 }
 
 .queue-card strong,
@@ -333,7 +326,7 @@ input {
 
 .dice-strip {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 112px;
+  grid-template-columns: minmax(0, 1fr) 124px;
   gap: 4px;
   align-items: stretch;
 }
@@ -360,6 +353,13 @@ input {
   box-shadow: inset 0 -10px 20px rgba(0, 0, 0, 0.12), 0 10px 22px rgba(255, 77, 141, 0.28);
 }
 
+.die.is-open {
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.08), rgba(89, 104, 135, 0.18));
+  border-style: dashed;
+  border-color: rgba(255, 255, 255, 0.2);
+  box-shadow: inset 0 -6px 12px rgba(19, 29, 53, 0.18);
+}
+
 .die-value {
   font-family: "Baskerville", "Georgia", serif;
   font-size: clamp(1.4rem, 5vw, 1.75rem);
@@ -373,12 +373,18 @@ input {
   color: #ffffff;
 }
 
+.die.is-open .die-value {
+  color: rgba(245, 248, 252, 0.82);
+  text-shadow: none;
+}
+
 .roll-button {
   min-height: 42px;
   border-radius: 16px;
-  padding: 0 10px;
-  font-size: 0.82rem;
-  line-height: 1.15;
+  padding: 0 8px;
+  font-size: 0.74rem;
+  line-height: 1;
+  white-space: nowrap;
 }
 
 .roll-button.is-your-turn:disabled {
@@ -387,15 +393,15 @@ input {
 }
 
 .roll-button.is-their-turn {
-  background: linear-gradient(180deg, rgba(196, 204, 214, 0.72), rgba(121, 131, 143, 0.92));
-  color: #eef3f8;
+  background: linear-gradient(180deg, rgba(84, 90, 102, 0.96), rgba(46, 50, 58, 0.98));
+  color: #ffffff;
   box-shadow: none;
 }
 
 .roll-button.is-their-turn:disabled {
   opacity: 1;
-  background: linear-gradient(180deg, rgba(196, 204, 214, 0.72), rgba(121, 131, 143, 0.92));
-  color: #eef3f8;
+  background: linear-gradient(180deg, rgba(84, 90, 102, 0.96), rgba(46, 50, 58, 0.98));
+  color: #ffffff;
   border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
@@ -655,10 +661,6 @@ thead th:first-child,
 }
 
 @media (max-width: 620px) {
-  .lobby-head {
-    grid-template-columns: 1fr;
-  }
-
   .queue-card,
   .queue-empty {
     grid-template-columns: 1fr;
@@ -715,7 +717,7 @@ thead th:first-child,
   }
 
   .dice-strip {
-    grid-template-columns: minmax(0, 1fr) 102px;
+    grid-template-columns: minmax(0, 1fr) 114px;
   }
 
   .die,

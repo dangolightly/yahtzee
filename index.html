@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+    <meta name="theme-color" content="#1f6b52" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="Yahtzee" />
+    <title>Yahtzee</title>
+    <link rel="manifest" href="manifest.webmanifest" />
+    <link rel="icon" href="icon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="icon.svg" />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <section class="top-strip panel">
+        <div class="player-strip">
+          <label class="player-chip" id="player-one-chip">
+            <span class="player-slot">1</span>
+            <input id="player-one-input" name="playerOne" maxlength="18" autocomplete="off" />
+            <strong id="player-one-total">0</strong>
+          </label>
+          <label class="player-chip" id="player-two-chip">
+            <span class="player-slot">2</span>
+            <input id="player-two-input" name="playerTwo" maxlength="18" autocomplete="off" />
+            <strong id="player-two-total">0</strong>
+          </label>
+          <button id="new-game-button" class="secondary-button compact-button" type="button">New</button>
+        </div>
+      </section>
+
+      <section class="dice-strip panel" aria-label="Dice tray">
+        <div id="dice-grid" class="dice-grid"></div>
+        <button id="roll-button" class="primary-button roll-button" type="button">Roll</button>
+      </section>
+
+      <section class="status-strip panel">
+        <div class="status-pill current-pill">
+          <span>Turn</span>
+          <strong id="current-player-label">Player 1</strong>
+        </div>
+        <div class="status-pill">
+          <span>Round</span>
+          <strong id="round-label">1 / 13</strong>
+        </div>
+        <div class="status-pill">
+          <span>Rolls</span>
+          <strong id="rolls-left-value">3</strong>
+        </div>
+        <div class="status-pill">
+          <span>Bonus</span>
+          <strong id="bonus-status">63 to go</strong>
+        </div>
+      </section>
+
+      <p id="install-warning" class="install-warning" hidden></p>
+      <p id="status-message" class="status-message"></p>
+      <p id="hint-output" class="hint-output" aria-live="polite"></p>
+      <section id="winner-banner" class="winner-banner panel" hidden>
+        <div class="winner-confetti" aria-hidden="true">. . .</div>
+        <p class="winner-kicker">Game over</p>
+        <h2 id="winner-title">Winner</h2>
+        <p id="winner-copy" class="winner-copy"></p>
+      </section>
+
+      <main class="scoreboard-panel panel">
+        <section class="scoreboard-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th id="player-one-heading">Player 1</th>
+                <th id="player-two-heading">Player 2</th>
+              </tr>
+            </thead>
+            <tbody id="scoreboard-body"></tbody>
+            <tfoot id="scoreboard-footer"></tfoot>
+          </table>
+        </section>
+      </main>
+    </div>
+
+    <template id="die-template">
+      <button class="die" type="button">
+        <span class="die-value"></span>
+      </button>
+    </template>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

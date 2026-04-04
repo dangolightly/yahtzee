@@ -1,0 +1,9 @@
+{
+  "name": "yahtzee-cabin",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Offline pass-and-play Yahtzee PWA.",
+  "scripts": {
+    "start": "node server.js"
+  }
+}

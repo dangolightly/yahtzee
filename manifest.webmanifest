@@ -1,0 +1,17 @@
+{
+  "name": "Yahtzee",
+  "short_name": "Yahtzee",
+  "description": "Offline pass-and-play Yahtzee for one shared phone.",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#efe4cd",
+  "theme_color": "#1f6b52",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

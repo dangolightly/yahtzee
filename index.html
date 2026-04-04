@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=39" />
+    <link rel="stylesheet" href="styles.css?v=40" />
   </head>
   <body>
     <div class="app-shell">
@@ -32,25 +32,18 @@
       </section>
 
       <section id="name-entry-modal" class="name-entry-modal" role="dialog" aria-modal="true" aria-labelledby="name-entry-title" hidden>
-        <form id="name-entry-form" class="name-entry-card panel" novalidate>
+        <form id="name-entry-form" class="name-entry-card panel" novalidate tabindex="-1">
           <p class="name-entry-kicker">Live Play</p>
           <h2 id="name-entry-title">Enter your name</h2>
           <p id="name-entry-copy" class="name-entry-copy">Enter your name to continue.</p>
+          <p id="name-entry-accepted" class="name-entry-accepted" hidden></p>
           <input id="name-entry-input" class="name-entry-input" name="profileName" maxlength="24" autocomplete="name" placeholder="Your name" />
           <button id="name-entry-button" class="primary-button name-entry-button" type="submit">Enter</button>
-        </form>
-      </section>
-
-      <section id="challenger-modal" class="challenger-modal" role="dialog" aria-modal="true" aria-labelledby="challenger-title" hidden>
-        <div id="challenger-card" class="challenger-card panel" tabindex="-1">
-          <p class="challenger-kicker">Live Play</p>
-          <h2 id="challenger-title">Choose a challenger</h2>
-          <p id="challenger-copy" class="challenger-copy">Step 2: Choose a challenger below.</p>
-          <div class="challenger-section">
+          <div id="name-entry-queue-section" class="challenger-section" hidden>
             <p class="queue-heading">Challenger List</p>
-            <div id="challenger-list" class="queue-list"></div>
+            <div id="name-entry-list" class="queue-list"></div>
           </div>
-        </div>
+        </form>
       </section>
 
       <section id="lobby-panel" class="lobby-panel panel" hidden>
@@ -81,7 +74,7 @@
           <table>
             <thead>
               <tr>
-                <th>Category <span class="category-version">(Version 1.4)</span></th>
+                <th>Category <span class="category-version">(Version 1.5)</span></th>
                 <th id="player-one-heading">Player 1</th>
                 <th id="player-two-heading">Player 2</th>
               </tr>
@@ -99,6 +92,6 @@
       </button>
     </template>
 
-    <script type="module" src="app.js?v=39"></script>
+    <script type="module" src="app.js?v=40"></script>
   </body>
 </html>

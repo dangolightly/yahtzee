@@ -113,6 +113,10 @@ input {
   box-shadow: 0 26px 52px rgba(0, 0, 0, 0.36);
 }
 
+.name-entry-card.is-queue-mode {
+  width: min(100%, 520px);
+}
+
 .name-entry-kicker {
   margin: 0;
   font-size: 0.72rem;
@@ -134,6 +138,17 @@ input {
   color: #f5f8fc;
   font-size: 0.96rem;
   line-height: 1.35;
+}
+
+.name-entry-accepted {
+  margin: -2px 0 0;
+  padding: 8px 12px;
+  border-radius: 999px;
+  background: rgba(191, 242, 183, 0.14);
+  border: 1px solid rgba(191, 242, 183, 0.3);
+  color: #ffffff;
+  font-size: 0.94rem;
+  font-weight: 700;
 }
 
 .name-entry-input {
@@ -165,55 +180,6 @@ input {
 .name-entry-button {
   min-height: 46px;
   font-size: 1rem;
-}
-
-.challenger-modal {
-  position: fixed;
-  inset: 0;
-  z-index: 35;
-  display: grid;
-  place-items: center;
-  padding: 18px;
-  background: rgba(9, 6, 27, 0.16);
-  -webkit-backdrop-filter: blur(3px);
-  backdrop-filter: blur(3px);
-}
-
-.challenger-card {
-  width: min(100%, 520px);
-  padding: 18px;
-  display: grid;
-  gap: 12px;
-  background: linear-gradient(145deg, rgba(24, 34, 71, 0.96), rgba(18, 22, 50, 0.98));
-  border: 1px solid rgba(94, 234, 212, 0.26);
-  box-shadow: 0 24px 48px rgba(0, 0, 0, 0.34);
-}
-
-.challenger-card:focus {
-  outline: none;
-}
-
-.challenger-kicker {
-  margin: 0;
-  font-size: 0.72rem;
-  font-weight: 800;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--sky);
-}
-
-.challenger-card h2 {
-  margin: 0;
-  font-family: "Baskerville", "Georgia", serif;
-  font-size: clamp(1.6rem, 4.5vw, 2rem);
-  color: #ffffff;
-}
-
-.challenger-copy {
-  margin: 0;
-  color: #f5f8fc;
-  font-size: 0.94rem;
-  line-height: 1.35;
 }
 
 .challenger-section {

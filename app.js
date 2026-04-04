@@ -40,14 +40,14 @@ const els = {
   playerTwoHeading: document.querySelector("#player-two-heading"),
   newGameButton: document.querySelector("#new-game-button"),
   nameEntryModal: document.querySelector("#name-entry-modal"),
+  nameEntryCard: document.querySelector("#name-entry-form"),
   nameEntryForm: document.querySelector("#name-entry-form"),
   nameEntryCopy: document.querySelector("#name-entry-copy"),
+  nameEntryAccepted: document.querySelector("#name-entry-accepted"),
   nameEntryInput: document.querySelector("#name-entry-input"),
   nameEntryButton: document.querySelector("#name-entry-button"),
-  challengerModal: document.querySelector("#challenger-modal"),
-  challengerCard: document.querySelector("#challenger-card"),
-  challengerCopy: document.querySelector("#challenger-copy"),
-  challengerList: document.querySelector("#challenger-list"),
+  nameEntryQueueSection: document.querySelector("#name-entry-queue-section"),
+  nameEntryList: document.querySelector("#name-entry-list"),
   rollButton: document.querySelector("#roll-button"),
   lobbyPanel: document.querySelector("#lobby-panel"),
   lobbyCopy: document.querySelector("#lobby-copy"),
@@ -205,7 +205,7 @@ const session = {
 let completedResetHandle = null;
 let completedResetPending = false;
 let nameEntryModalVisible = false;
-let challengerModalVisible = false;
+let nameEntryModalStage = "";
 let enableOnlinePromise = null;
 
 function getCounts(dice) {
@@ -423,59 +423,49 @@ function renderLobby() {
 }
 
 function renderNameEntryModal() {
-  const showModal = isAwaitingOnlineName() && !session.submittingName;
+  const showModal = session.submittingName || isAwaitingOnlineName() || isAwaitingChallengerChoice();
   els.nameEntryModal.hidden = !showModal;
 
   if (!showModal) {
     nameEntryModalVisible = false;
+    nameEntryModalStage = "";
+    els.nameEntryAccepted.hidden = true;
+    els.nameEntryQueueSection.hidden = true;
+    els.nameEntryList.innerHTML = "";
     return;
   }
+
+  const acceptedName = session.profileName.trim();
+  const showingQueue = session.submittingName || isAwaitingChallengerChoice();
+  const stage = !showingQueue ? "name" : session.submittingName ? "loading" : "queue";
 
   updateInputValue(els.nameEntryInput, session.profileName);
-  els.nameEntryCopy.textContent = session.notice || "Enter your name to continue.";
-  els.nameEntryInput.disabled = false;
-  els.nameEntryButton.disabled = !session.profileName.trim();
-  els.nameEntryButton.textContent = "Enter";
+  els.nameEntryCard?.classList.toggle("is-queue-mode", showingQueue);
+  els.nameEntryAccepted.hidden = !acceptedName || !showingQueue;
+  els.nameEntryAccepted.textContent = acceptedName ? `Name: ${acceptedName}` : "";
+  els.nameEntryInput.hidden = showingQueue;
+  els.nameEntryButton.hidden = showingQueue;
+  els.nameEntryQueueSection.hidden = !showingQueue;
 
-  if (!nameEntryModalVisible) {
-    window.requestAnimationFrame(() => {
-      if (!isAwaitingOnlineName()) {
-        return;
-      }
-
-      els.nameEntryInput.focus();
-      els.nameEntryInput.select();
-    });
-  }
-
-  nameEntryModalVisible = true;
-}
-
-function renderChallengerModal() {
-  const showModal = session.submittingName || isAwaitingChallengerChoice();
-  els.challengerModal.hidden = !showModal;
-
-  if (!showModal) {
-    els.challengerList.innerHTML = "";
-    challengerModalVisible = false;
-    return;
-  }
-
-  if (session.submittingName) {
-    els.challengerCopy.textContent = "Opening challenger list...";
-    els.challengerList.innerHTML = '<p class="queue-empty">Waiting for a challenger to join.</p>';
+  if (!showingQueue) {
+    els.nameEntryCopy.textContent = session.notice || "Enter your name to continue.";
+    els.nameEntryInput.disabled = false;
+    els.nameEntryButton.disabled = !acceptedName;
+    els.nameEntryButton.textContent = "Enter";
+    els.nameEntryList.innerHTML = "";
+  } else if (session.submittingName) {
+    els.nameEntryCopy.textContent = "Opening challenger list...";
+    els.nameEntryList.innerHTML = '<p class="queue-empty">Waiting for challenger to join.</p>';
   } else if (session.waitingGames.length === 0) {
-    els.challengerCopy.textContent = session.joiningGameId
+    els.nameEntryCopy.textContent = session.joiningGameId
       ? "Opening your game..."
-      : session.notice
-      || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Waiting for challengers. This list updates automatically.");
-    els.challengerList.innerHTML = '<p class="queue-empty">Waiting for a challenger to join.</p>';
+      : session.notice || "Waiting for challenger.";
+    els.nameEntryList.innerHTML = '<p class="queue-empty">Waiting for challenger to join.</p>';
   } else {
-    els.challengerCopy.textContent = session.joiningGameId
+    els.nameEntryCopy.textContent = session.joiningGameId
       ? "Opening your game..."
-      : session.notice
-      || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Tap a challenger below to start.");
-    els.challengerList.innerHTML = session.waitingGames.map((game, index) => `
+      : session.notice || "Choose a challenger below.";
+    els.nameEntryList.innerHTML = session.waitingGames.map((game, index) => `
       <button class="queue-card" type="button" data-join-game="${game.id}" ${session.joiningGameId ? "disabled" : ""}>
         <div>
           <strong>${index + 1}. ${game.hostName}</strong>
@@ -485,22 +475,29 @@ function renderChallengerModal() {
     `).join("");
   }
 
-  if (!challengerModalVisible) {
+  if (!nameEntryModalVisible || nameEntryModalStage !== stage) {
     window.requestAnimationFrame(() => {
-      if (!isAwaitingChallengerChoice()) {
+      if (els.nameEntryModal.hidden) {
         return;
       }
 
-      const firstButton = els.challengerList.querySelector("[data-join-game]");
+      if (stage === "name") {
+        els.nameEntryInput.focus();
+        els.nameEntryInput.select();
+        return;
+      }
+
+      const firstButton = els.nameEntryList.querySelector("[data-join-game]");
       if (firstButton) {
         firstButton.focus();
       } else {
-        els.challengerCard.focus();
+        els.nameEntryForm.focus();
       }
     });
   }
 
-  challengerModalVisible = true;
+  nameEntryModalVisible = true;
+  nameEntryModalStage = stage;
 }
 
 function renderDice() {
@@ -684,7 +681,6 @@ function renderStatus() {
 function render() {
   renderLobby();
   renderNameEntryModal();
-  renderChallengerModal();
   renderStatus();
   renderDice();
   renderScoreboard();
@@ -1091,7 +1087,7 @@ function handleJoinGameClick(event) {
 }
 
 els.queueList.addEventListener("click", handleJoinGameClick);
-els.challengerList.addEventListener("click", handleJoinGameClick);
+els.nameEntryList.addEventListener("click", handleJoinGameClick);
 
 els.diceGrid.addEventListener("click", (event) => {
   const button = event.target.closest(".die");
@@ -1124,7 +1120,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=39").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=40").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

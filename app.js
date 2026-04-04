@@ -848,7 +848,7 @@ async function submitProfileUpdate() {
 }
 
 async function submitNameEntry() {
-  if (session.submittingName) {
+  if (session.submittingName || !isAwaitingOnlineName()) {
     return;
   }
 
@@ -1120,7 +1120,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=40").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=41").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

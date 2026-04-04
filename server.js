@@ -8,6 +8,7 @@ const COMPLETED_GAME_TTL_MS = 10 * 60 * 1000;
 const DISCONNECT_GRACE_MS = 12 * 1000;
 const MAX_WAITING_GAMES = 10;
 const root = __dirname;
+const MATCH_HISTORY_PATH = path.join(root, "match-history.ndjson");
 
 const categories = [
   { key: "ones", section: "upper" },
@@ -230,6 +231,39 @@ function getWinnerSummary(game) {
   };
 }
 
+function appendMatchHistory(game, metadata = {}) {
+  const totals = game.state.players.map(getPlayerTotals);
+  const winnerIndex = totals[0].grandTotal === totals[1].grandTotal
+    ? null
+    : totals[0].grandTotal > totals[1].grandTotal ? 0 : 1;
+
+  const entry = {
+    finishedAt: new Date(metadata.finishedAt || game.completedAt || Date.now()).toISOString(),
+    gameId: game.id,
+    result: metadata.result || (winnerIndex === null ? "tie" : "completed"),
+    reason: metadata.reason || null,
+    notice: game.notice || "",
+    players: game.state.players.map((player, index) => ({
+      seat: index + 1,
+      name: player.name,
+      score: totals[index].grandTotal,
+    })),
+    winner: winnerIndex === null
+      ? null
+      : {
+        seat: winnerIndex + 1,
+        name: game.state.players[winnerIndex].name,
+        score: totals[winnerIndex].grandTotal,
+      },
+  };
+
+  try {
+    fs.appendFileSync(MATCH_HISTORY_PATH, `${JSON.stringify(entry)}\n`, "utf8");
+  } catch (error) {
+    console.error("Could not write match history", error);
+  }
+}
+
 function touchGame(game) {
   game.updatedAt = Date.now();
 }
@@ -403,6 +437,7 @@ function concludeByDefault(game, playerIndex, reason) {
   game.completedAt = Date.now();
   game.notice = `${winnerName} wins by default. ${leaverName} ${reason}.`;
   touchGame(game);
+  appendMatchHistory(game, { result: "default_win", reason });
 }
 
 function markClientDisconnected(clientId) {
@@ -642,6 +677,7 @@ function takeScoreFor(clientId, categoryKey) {
     game.status = "completed";
     game.completedAt = Date.now();
     game.notice = getWinnerSummary(game).footer;
+    appendMatchHistory(game, { result: "completed" });
   }
   return true;
 }

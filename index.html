@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=34" />
+    <link rel="stylesheet" href="styles.css?v=35" />
   </head>
   <body>
     <div class="app-shell">
@@ -20,16 +20,36 @@
           <label class="player-chip" id="player-one-chip">
             <span class="player-slot">1</span>
             <input id="player-one-input" name="playerOne" maxlength="24" autocomplete="off" />
-            <span id="player-one-seat-tag" class="seat-tag" hidden>You</span>
             <strong id="player-one-total">0</strong>
           </label>
           <label class="player-chip" id="player-two-chip">
             <span class="player-slot">2</span>
             <input id="player-two-input" name="playerTwo" maxlength="24" autocomplete="off" />
-            <span id="player-two-seat-tag" class="seat-tag" hidden>You</span>
             <strong id="player-two-total">0</strong>
           </label>
           <button id="new-game-button" class="secondary-button compact-button" type="button">New</button>
+        </div>
+      </section>
+
+      <section id="name-entry-modal" class="name-entry-modal" role="dialog" aria-modal="true" aria-labelledby="name-entry-title" hidden>
+        <form id="name-entry-form" class="name-entry-card panel" novalidate>
+          <p class="name-entry-kicker">Live Play</p>
+          <h2 id="name-entry-title">Enter your name</h2>
+          <p id="name-entry-copy" class="name-entry-copy">Enter your name to join the challenger list.</p>
+          <input id="name-entry-input" class="name-entry-input" name="profileName" maxlength="24" autocomplete="name" placeholder="Your name" />
+          <button id="name-entry-button" class="primary-button name-entry-button" type="submit">Enter</button>
+        </form>
+      </section>
+
+      <section id="challenger-modal" class="challenger-modal" role="dialog" aria-modal="true" aria-labelledby="challenger-title" hidden>
+        <div id="challenger-card" class="challenger-card panel" tabindex="-1">
+          <p class="challenger-kicker">Live Play</p>
+          <h2 id="challenger-title">Choose a challenger</h2>
+          <p id="challenger-copy" class="challenger-copy">Step 2: Choose a challenger below.</p>
+          <div class="challenger-section">
+            <p class="queue-heading">Challenger List</p>
+            <div id="challenger-list" class="queue-list"></div>
+          </div>
         </div>
       </section>
 
@@ -61,7 +81,7 @@
           <table>
             <thead>
               <tr>
-                <th>Category <span class="category-version">(Version 0.9)</span></th>
+                <th>Category <span class="category-version">(Version 1.0)</span></th>
                 <th id="player-one-heading">Player 1</th>
                 <th id="player-two-heading">Player 2</th>
               </tr>
@@ -79,6 +99,6 @@
       </button>
     </template>
 
-    <script type="module" src="app.js?v=34"></script>
+    <script type="module" src="app.js?v=35"></script>
   </body>
 </html>

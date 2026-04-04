@@ -34,13 +34,20 @@ const els = {
   playerTwoInput: document.querySelector("#player-two-input"),
   playerOneChip: document.querySelector("#player-one-chip"),
   playerTwoChip: document.querySelector("#player-two-chip"),
-  playerOneSeatTag: document.querySelector("#player-one-seat-tag"),
-  playerTwoSeatTag: document.querySelector("#player-two-seat-tag"),
   playerOneTotal: document.querySelector("#player-one-total"),
   playerTwoTotal: document.querySelector("#player-two-total"),
   playerOneHeading: document.querySelector("#player-one-heading"),
   playerTwoHeading: document.querySelector("#player-two-heading"),
   newGameButton: document.querySelector("#new-game-button"),
+  nameEntryModal: document.querySelector("#name-entry-modal"),
+  nameEntryForm: document.querySelector("#name-entry-form"),
+  nameEntryCopy: document.querySelector("#name-entry-copy"),
+  nameEntryInput: document.querySelector("#name-entry-input"),
+  nameEntryButton: document.querySelector("#name-entry-button"),
+  challengerModal: document.querySelector("#challenger-modal"),
+  challengerCard: document.querySelector("#challenger-card"),
+  challengerCopy: document.querySelector("#challenger-copy"),
+  challengerList: document.querySelector("#challenger-list"),
   rollButton: document.querySelector("#roll-button"),
   lobbyPanel: document.querySelector("#lobby-panel"),
   lobbyCopy: document.querySelector("#lobby-copy"),
@@ -195,6 +202,8 @@ const session = {
 
 let completedResetHandle = null;
 let completedResetPending = false;
+let nameEntryModalVisible = false;
+let challengerModalVisible = false;
 
 function getCounts(dice) {
   return dice.reduce((counts, value) => {
@@ -343,6 +352,14 @@ function hasAcceptedName() {
   return isOnlineMode() && ["waiting", "active", "completed"].includes(session.phase);
 }
 
+function isAwaitingOnlineName() {
+  return isOnlineMode() && !hasAcceptedName();
+}
+
+function isAwaitingChallengerChoice() {
+  return isOnlineMode() && hasAcceptedName() && session.phase !== "active" && session.phase !== "completed";
+}
+
 function isDefaultWinActive() {
   return isOnlineMode() && session.phase === "completed" && !isGameOver();
 }
@@ -397,50 +414,81 @@ function renderNotice() {
 }
 
 function renderLobby() {
-  const showLobby = isOnlineMode() && session.phase !== "active" && session.phase !== "completed";
-  if (!showLobby) {
-    els.lobbyPanel.hidden = true;
-    els.queueSection.hidden = true;
-    els.queueList.innerHTML = "";
+  els.lobbyPanel.hidden = true;
+  els.queueSection.hidden = true;
+  els.queueList.innerHTML = "";
+}
+
+function renderNameEntryModal() {
+  const showModal = isAwaitingOnlineName();
+  els.nameEntryModal.hidden = !showModal;
+
+  if (!showModal) {
+    nameEntryModalVisible = false;
     return;
   }
 
-  els.lobbyPanel.hidden = false;
-  const accepted = hasAcceptedName();
-  els.queueSection.hidden = !accepted;
+  updateInputValue(els.nameEntryInput, session.profileName);
+  els.nameEntryCopy.textContent = session.notice || "Enter your name to join the challenger list.";
+  els.nameEntryButton.disabled = !session.profileName.trim();
 
-  if (!accepted) {
-    els.lobbyCopy.textContent = session.notice
-      || (session.reconnecting
-        ? "Trying to reconnect..."
-        : session.profileName
-        ? "Step 1: Press Enter on your name in Player 1 to open the challenger list."
-        : "Step 1: Type your name in Player 1, then press Enter to open the challenger list.");
-    els.lobbyCopy.hidden = !els.lobbyCopy.textContent;
-    els.queueList.innerHTML = "";
+  if (!nameEntryModalVisible) {
+    window.requestAnimationFrame(() => {
+      if (!isAwaitingOnlineName()) {
+        return;
+      }
+
+      els.nameEntryInput.focus();
+      els.nameEntryInput.select();
+    });
+  }
+
+  nameEntryModalVisible = true;
+}
+
+function renderChallengerModal() {
+  const showModal = isAwaitingChallengerChoice();
+  els.challengerModal.hidden = !showModal;
+
+  if (!showModal) {
+    els.challengerList.innerHTML = "";
+    challengerModalVisible = false;
     return;
   }
 
   if (session.waitingGames.length === 0) {
-    els.lobbyCopy.textContent = session.notice
-      || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Choose a challenger below. If the list is empty, stay here and it will update.");
-    els.lobbyCopy.hidden = false;
-    els.queueList.innerHTML = '<p class="queue-empty">No challengers available yet. Waiting for one to appear...</p>';
-    return;
+    els.challengerCopy.textContent = session.notice
+      || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Waiting for challengers. This list updates automatically.");
+    els.challengerList.innerHTML = '<p class="queue-empty">No challengers available yet. Waiting for one to appear...</p>';
+  } else {
+    els.challengerCopy.textContent = session.notice
+      || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Tap a challenger below to start.");
+    els.challengerList.innerHTML = session.waitingGames.map((game, index) => `
+      <button class="queue-card" type="button" data-join-game="${game.id}">
+        <div>
+          <strong>${index + 1}. ${game.hostName}</strong>
+          <span>Tap to accept this challenger.</span>
+        </div>
+      </button>
+    `).join("");
   }
 
-  els.lobbyCopy.textContent = session.notice
-    || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Tap a challenger below to start.");
-  els.lobbyCopy.hidden = false;
+  if (!challengerModalVisible) {
+    window.requestAnimationFrame(() => {
+      if (!isAwaitingChallengerChoice()) {
+        return;
+      }
 
-  els.queueList.innerHTML = session.waitingGames.map((game, index) => `
-    <button class="queue-card" type="button" data-join-game="${game.id}">
-      <div>
-        <strong>${index + 1}. ${game.hostName}</strong>
-        <span>Tap to accept this challenger.</span>
-      </div>
-    </button>
-  `).join("");
+      const firstButton = els.challengerList.querySelector("[data-join-game]");
+      if (firstButton) {
+        firstButton.focus();
+      } else {
+        els.challengerCard.focus();
+      }
+    });
+  }
+
+  challengerModalVisible = true;
 }
 
 function renderDice() {
@@ -551,13 +599,12 @@ function renderStatus() {
   const totals = state.players.map(getPlayerTotals);
   const ownedSeat = isOnlineMode() && session.phase === "active" ? session.playerIndex : null;
   const online = isOnlineMode();
-  const accepted = hasAcceptedName();
   const rollsLeft = isGameOver() ? 0 : state.rollsLeft;
   const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
   const isMyTurn = isOnlineActiveTurn && ownedSeat === state.currentPlayer;
   const isDefaultCompleted = isDefaultWinActive();
-  const playerOneLabel = online && !accepted ? session.profileName : state.players[0].name;
-  const playerTwoLabel = online && !accepted ? "" : state.players[1].name;
+  const playerOneLabel = state.players[0].name;
+  const playerTwoLabel = state.players[1].name;
 
   updateInputValue(els.playerOneInput, playerOneLabel);
   updateInputValue(els.playerTwoInput, playerTwoLabel);
@@ -569,15 +616,12 @@ function renderStatus() {
   els.playerTwoChip.classList.toggle("is-active", isOnlineActiveTurn ? (isMyTurn && ownedSeat === 1) : state.currentPlayer === 1);
   els.playerOneChip.classList.toggle("is-owned", ownedSeat === 0);
   els.playerTwoChip.classList.toggle("is-owned", ownedSeat === 1);
-  els.playerOneChip.classList.toggle("is-awaiting-name", online && !accepted);
   els.playerOneChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
   els.playerTwoChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
-  els.playerOneSeatTag.hidden = ownedSeat !== 0;
-  els.playerTwoSeatTag.hidden = ownedSeat !== 1;
 
-  els.playerOneInput.placeholder = online && !accepted ? "Enter your name here" : "";
+  els.playerOneInput.placeholder = "";
   els.playerTwoInput.placeholder = "";
-  els.playerOneInput.disabled = online && accepted;
+  els.playerOneInput.disabled = online;
   els.playerTwoInput.disabled = online;
   els.newGameButton.disabled = online ? !(session.phase === "active" || session.phase === "completed") : false;
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
@@ -627,6 +671,8 @@ function renderStatus() {
 
 function render() {
   renderLobby();
+  renderNameEntryModal();
+  renderChallengerModal();
   renderStatus();
   renderDice();
   renderScoreboard();
@@ -884,6 +930,26 @@ els.newGameButton.addEventListener("click", () => {
   resetGameLocal();
 });
 
+els.nameEntryForm.addEventListener("submit", (event) => {
+  event.preventDefault();
+  if (!isAwaitingOnlineName()) {
+    return;
+  }
+
+  session.profileName = String(els.nameEntryInput.value || "").slice(0, 24);
+  submitProfileUpdate();
+});
+
+els.nameEntryInput.addEventListener("input", (event) => {
+  if (!isAwaitingOnlineName()) {
+    return;
+  }
+
+  session.profileName = String(event.target.value || "").slice(0, 24);
+  session.notice = "";
+  renderNameEntryModal();
+});
+
 els.playerOneInput.addEventListener("change", (event) => {
   if (isOnlineMode()) {
     if (!hasAcceptedName()) {
@@ -924,14 +990,17 @@ els.playerTwoInput.addEventListener("blur", (event) => {
   }
 });
 
-els.queueList.addEventListener("click", (event) => {
+function handleJoinGameClick(event) {
   const button = event.target.closest("[data-join-game]");
   if (!button || button.disabled) {
     return;
   }
 
   joinOnlineGame(button.dataset.joinGame);
-});
+}
+
+els.queueList.addEventListener("click", handleJoinGameClick);
+els.challengerList.addEventListener("click", handleJoinGameClick);
 
 els.diceGrid.addEventListener("click", (event) => {
   const button = event.target.closest(".die");
@@ -964,7 +1033,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=34").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=35").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

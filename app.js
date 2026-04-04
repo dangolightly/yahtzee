@@ -198,6 +198,8 @@ const session = {
   waitingGames: [],
   currentGameId: null,
   disconnectSent: false,
+  submittingName: false,
+  joiningGameId: null,
 };
 
 let completedResetHandle = null;
@@ -429,8 +431,12 @@ function renderNameEntryModal() {
   }
 
   updateInputValue(els.nameEntryInput, session.profileName);
-  els.nameEntryCopy.textContent = session.notice || "Enter your name to join the challenger list.";
-  els.nameEntryButton.disabled = !session.profileName.trim();
+  els.nameEntryCopy.textContent = session.submittingName
+    ? "Entering your name and opening the challenger list..."
+    : session.notice || "Enter your name to join the challenger list.";
+  els.nameEntryInput.disabled = session.submittingName;
+  els.nameEntryButton.disabled = session.submittingName || !session.profileName.trim();
+  els.nameEntryButton.textContent = session.submittingName ? "Entering..." : "Enter";
 
   if (!nameEntryModalVisible) {
     window.requestAnimationFrame(() => {
@@ -457,17 +463,21 @@ function renderChallengerModal() {
   }
 
   if (session.waitingGames.length === 0) {
-    els.challengerCopy.textContent = session.notice
+    els.challengerCopy.textContent = session.joiningGameId
+      ? "Opening your game..."
+      : session.notice
       || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Waiting for challengers. This list updates automatically.");
     els.challengerList.innerHTML = '<p class="queue-empty">No challengers available yet. Waiting for one to appear...</p>';
   } else {
-    els.challengerCopy.textContent = session.notice
+    els.challengerCopy.textContent = session.joiningGameId
+      ? "Opening your game..."
+      : session.notice
       || (session.reconnecting ? "Trying to reconnect..." : "Step 2: Tap a challenger below to start.");
     els.challengerList.innerHTML = session.waitingGames.map((game, index) => `
-      <button class="queue-card" type="button" data-join-game="${game.id}">
+      <button class="queue-card" type="button" data-join-game="${game.id}" ${session.joiningGameId ? "disabled" : ""}>
         <div>
           <strong>${index + 1}. ${game.hostName}</strong>
-          <span>Tap to accept this challenger.</span>
+          <span>${session.joiningGameId === game.id ? "Opening game..." : "Tap to accept this challenger."}</span>
         </div>
       </button>
     `).join("");
@@ -775,6 +785,8 @@ function applyOnlineSnapshot(snapshot) {
   session.disconnectSent = false;
   session.waitingGames = snapshot.lobby?.waitingGames || [];
   session.currentGameId = snapshot.game?.id || snapshot.lobby?.currentGameId || null;
+  session.submittingName = false;
+  session.joiningGameId = null;
   if (typeof snapshot.profileName === "string") {
     const nextProfileName = snapshot.profileName.trim() ? snapshot.profileName.slice(0, 24) : session.profileName;
     session.profileName = nextProfileName;
@@ -804,7 +816,7 @@ async function syncOnlineState() {
 }
 
 async function submitProfileUpdate() {
-  if (!isOnlineMode()) {
+  if (!isOnlineMode() || session.submittingName) {
     return;
   }
 
@@ -814,6 +826,9 @@ async function submitProfileUpdate() {
   }
 
   try {
+    session.submittingName = true;
+    session.notice = "";
+    render();
     const snapshot = await fetchJson("/api/profile", {
       method: "POST",
       body: JSON.stringify({ clientId: session.clientId, name: session.profileName }),
@@ -828,11 +843,21 @@ async function submitProfileUpdate() {
       session.notice = error.message || "Could not update your name.";
       render();
     }
+  } finally {
+    session.submittingName = false;
+    render();
   }
 }
 
 async function joinOnlineGame(gameId) {
+  if (session.joiningGameId) {
+    return;
+  }
+
   try {
+    session.joiningGameId = gameId;
+    session.notice = "";
+    render();
     const snapshot = await fetchJson("/api/lobby/join", {
       method: "POST",
       body: JSON.stringify({ clientId: session.clientId, gameId, name: session.profileName }),
@@ -847,6 +872,9 @@ async function joinOnlineGame(gameId) {
       session.notice = error.message || "Could not challenge that player.";
       render();
     }
+  } finally {
+    session.joiningGameId = null;
+    render();
   }
 }
 
@@ -905,10 +933,12 @@ async function tryEnableOnlineMode() {
     session.playerIndex = null;
     session.phase = "offline";
     session.notice = "";
-    session.waitingGames = [];
-    session.currentGameId = null;
-    session.disconnectSent = false;
-    render();
+  session.waitingGames = [];
+  session.currentGameId = null;
+  session.disconnectSent = false;
+  session.submittingName = false;
+  session.joiningGameId = null;
+  render();
   }
 }
 
@@ -1033,7 +1063,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=35").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=36").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

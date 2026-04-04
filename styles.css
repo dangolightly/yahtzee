@@ -402,6 +402,11 @@ thead th:first-child,
 .score-cell.stagger-left,
 .score-cell.stagger-right {
   position: relative;
+  text-align: left;
+}
+
+.score-cell.stagger-right {
+  text-align: right;
 }
 
 .score-button,
@@ -410,7 +415,7 @@ thead th:first-child,
   width: 100%;
   min-height: 24px;
   border-radius: 999px;
-  display: inline-grid;
+  display: grid;
   place-items: center;
   font-size: 0.78rem;
   font-weight: 700;
@@ -431,14 +436,12 @@ thead th:first-child,
 
 .score-cell.stagger-left .score-button.is-active {
   width: 50%;
-  margin-right: auto;
-  margin-left: 0;
+  margin: 0;
 }
 
 .score-cell.stagger-right .score-button.is-active {
   width: 50%;
-  margin-left: auto;
-  margin-right: 0;
+  margin: 0 0 0 auto;
 }
 
 .score-value {
@@ -496,11 +499,11 @@ thead th:first-child,
   }
 
   .score-cell.stagger-left .score-button.is-active {
-    margin-right: auto;
+    margin: 0;
   }
 
   .score-cell.stagger-right .score-button.is-active {
-    margin-left: auto;
+    margin: 0 0 0 auto;
   }
 
   .dice-strip {

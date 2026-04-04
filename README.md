@@ -42,6 +42,8 @@ Then open `http://localhost:4173` on one or two devices on the same network. The
 
 The repository is ready to deploy as a Node web service.
 
+[![Deploy to Render](https://render.com/images/deploy-to-render-button.svg)](https://render.com/deploy?repo=https://github.com/dangolightly/yahtzee)
+
 ### Render
 
 1. Push this repo to GitHub.

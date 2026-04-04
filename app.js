@@ -2,6 +2,7 @@ const STORAGE_KEY = "yahtzee-state-v2";
 const CLIENT_ID_KEY = "yahtzee-client-id-v2";
 const PROFILE_NAME_KEY = "yahtzee-profile-name-v1";
 const SESSION_POLL_MS = 4000;
+const REQUEST_TIMEOUT_MS = 12000;
 
 const categories = [
   { key: "ones", label: "Ones", section: "upper" },
@@ -42,6 +43,7 @@ const els = {
   nameEntryModal: document.querySelector("#name-entry-modal"),
   nameEntryCard: document.querySelector("#name-entry-form"),
   nameEntryForm: document.querySelector("#name-entry-form"),
+  nameEntryTitle: document.querySelector("#name-entry-title"),
   nameEntryCopy: document.querySelector("#name-entry-copy"),
   nameEntryAccepted: document.querySelector("#name-entry-accepted"),
   nameEntryInput: document.querySelector("#name-entry-input"),
@@ -367,6 +369,20 @@ function isDefaultWinActive() {
   return isOnlineMode() && session.phase === "completed" && !isGameOver();
 }
 
+function getAcceptedProfileName() {
+  const explicitName = session.profileName.trim();
+  if (explicitName) {
+    return explicitName;
+  }
+
+  if (!hasAcceptedName()) {
+    return "";
+  }
+
+  const fallbackPlayer = state.players[session.playerIndex ?? 0];
+  return String(fallbackPlayer?.name || "").trim().slice(0, 24);
+}
+
 function clearCompletedResetTimer() {
   if (!completedResetHandle) {
     return;
@@ -435,9 +451,13 @@ function renderNameEntryModal() {
     return;
   }
 
-  const acceptedName = session.profileName.trim();
+  const enteredName = session.profileName.trim();
+  const acceptedName = getAcceptedProfileName();
   const showingQueue = session.submittingName || isAwaitingChallengerChoice();
   const stage = !showingQueue ? "name" : session.submittingName ? "loading" : "queue";
+  const queueNotice = session.notice && !session.notice.toLowerCase().startsWith("enter your name")
+    ? session.notice
+    : "";
 
   updateInputValue(els.nameEntryInput, session.profileName);
   els.nameEntryCard?.classList.toggle("is-queue-mode", showingQueue);
@@ -448,23 +468,27 @@ function renderNameEntryModal() {
   els.nameEntryQueueSection.hidden = !showingQueue;
 
   if (!showingQueue) {
-    els.nameEntryCopy.textContent = session.notice || "Enter your name to continue.";
+    els.nameEntryTitle.textContent = "Step 1: Enter your name";
+    els.nameEntryCopy.textContent = session.notice || "Enter your name and hit Enter.";
     els.nameEntryInput.disabled = false;
-    els.nameEntryButton.disabled = !acceptedName;
+    els.nameEntryButton.disabled = !enteredName;
     els.nameEntryButton.textContent = "Enter";
     els.nameEntryList.innerHTML = "";
   } else if (session.submittingName) {
+    els.nameEntryTitle.textContent = "Opening Challenger List";
     els.nameEntryCopy.textContent = "Opening challenger list...";
     els.nameEntryList.innerHTML = '<p class="queue-empty">Waiting for challenger to join.</p>';
   } else if (session.waitingGames.length === 0) {
+    els.nameEntryTitle.textContent = "Step 2: Choose challenger";
     els.nameEntryCopy.textContent = session.joiningGameId
       ? "Opening your game..."
-      : session.notice || "Waiting for challenger.";
+      : queueNotice || "Waiting for challenger.";
     els.nameEntryList.innerHTML = '<p class="queue-empty">Waiting for challenger to join.</p>';
   } else {
+    els.nameEntryTitle.textContent = "Step 2: Choose challenger";
     els.nameEntryCopy.textContent = session.joiningGameId
       ? "Opening your game..."
-      : session.notice || "Choose a challenger below.";
+      : queueNotice || "Choose a challenger below.";
     els.nameEntryList.innerHTML = session.waitingGames.map((game, index) => `
       <button class="queue-card" type="button" data-join-game="${game.id}" ${session.joiningGameId ? "disabled" : ""}>
         <div>
@@ -754,23 +778,37 @@ function resetGameLocal() {
 }
 
 async function fetchJson(url, options = {}) {
-  const response = await fetch(url, {
-    cache: "no-store",
-    ...options,
-    headers: {
-      "Content-Type": "application/json",
-      ...(options.headers || {}),
-    },
-  });
+  const { timeoutMs = REQUEST_TIMEOUT_MS, ...fetchOptions } = options;
+  const controller = new AbortController();
+  const timeoutHandle = window.setTimeout(() => controller.abort(), timeoutMs);
 
-  const payload = await response.json().catch(() => null);
-  if (!response.ok) {
-    const error = new Error(payload?.error || `Request failed: ${response.status}`);
-    error.payload = payload;
+  try {
+    const response = await fetch(url, {
+      cache: "no-store",
+      ...fetchOptions,
+      signal: controller.signal,
+      headers: {
+        "Content-Type": "application/json",
+        ...(fetchOptions.headers || {}),
+      },
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+      const error = new Error(payload?.error || `Request failed: ${response.status}`);
+      error.payload = payload;
+      throw error;
+    }
+
+    return payload;
+  } catch (error) {
+    if (error?.name === "AbortError") {
+      throw new Error("Request timed out. Please try again.");
+    }
     throw error;
+  } finally {
+    window.clearTimeout(timeoutHandle);
   }
-
-  return payload;
 }
 
 function applyOnlineSnapshot(snapshot) {
@@ -1120,7 +1158,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=41").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=42").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

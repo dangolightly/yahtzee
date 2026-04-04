@@ -1,9 +1,9 @@
-const CACHE_NAME = "yahtzee-cabin-v20";
+const CACHE_NAME = "yahtzee-cabin-v21";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=23",
-  "./app.js?v=23",
+  "./styles.css?v=24",
+  "./app.js?v=24",
   "./manifest.webmanifest",
   "./icon.svg",
 ];
@@ -30,6 +30,11 @@ self.addEventListener("fetch", (event) => {
   }
 
   const requestUrl = new URL(event.request.url);
+  if (requestUrl.pathname.startsWith("/api/")) {
+    event.respondWith(fetch(event.request));
+    return;
+  }
+
   const isAppAsset = APP_ASSETS.some((asset) => requestUrl.pathname.endsWith(asset.replace("./", "/"))) || requestUrl.pathname.endsWith("/yahtzee/") || requestUrl.pathname.endsWith("/yahtzee");
 
   event.respondWith(

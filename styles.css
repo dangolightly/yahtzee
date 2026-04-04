@@ -430,14 +430,14 @@ thead th:first-child,
 }
 
 .score-cell.stagger-left .score-button.is-active {
-  width: calc(100% - 22px);
-  margin-right: 22px;
+  width: 50%;
+  margin-right: auto;
   margin-left: 0;
 }
 
 .score-cell.stagger-right .score-button.is-active {
-  width: calc(100% - 22px);
-  margin-left: 22px;
+  width: 50%;
+  margin-left: auto;
   margin-right: 0;
 }
 
@@ -492,15 +492,15 @@ thead th:first-child,
 
   .score-cell.stagger-left .score-button.is-active,
   .score-cell.stagger-right .score-button.is-active {
-    width: calc(100% - 14px);
+    width: 50%;
   }
 
   .score-cell.stagger-left .score-button.is-active {
-    margin-right: 14px;
+    margin-right: auto;
   }
 
   .score-cell.stagger-right .score-button.is-active {
-    margin-left: 14px;
+    margin-left: auto;
   }
 
   .dice-strip {

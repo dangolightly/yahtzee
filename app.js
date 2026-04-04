@@ -44,9 +44,8 @@ const els = {
   rollButton: document.querySelector("#roll-button"),
   lobbyPanel: document.querySelector("#lobby-panel"),
   displayNameInput: document.querySelector("#display-name-input"),
-  createGameButton: document.querySelector("#create-game-button"),
-  leaveGameButton: document.querySelector("#leave-game-button"),
   lobbyCopy: document.querySelector("#lobby-copy"),
+  queueSection: document.querySelector("#queue-section"),
   queueList: document.querySelector("#queue-list"),
   sessionBanner: document.querySelector("#session-banner"),
   installWarning: document.querySelector("#install-warning"),
@@ -321,12 +320,12 @@ function canCurrentClientAct() {
   return !isOnlineMode() || (session.playerIndex === state.currentPlayer && session.phase === "active");
 }
 
+function hasAcceptedName() {
+  return isOnlineMode() && ["waiting", "active", "completed"].includes(session.phase);
+}
+
 function renderNotice() {
   const messages = [];
-
-  if (isOnlineMode() && session.notice) {
-    messages.push(session.notice);
-  }
 
   if (isOfflineInstallBlocked) {
     messages.push("This LAN address is not a secure install origin on iPhone. It can preview the game, but Add to Home Screen will not work offline until the app is hosted on HTTPS.");
@@ -342,45 +341,42 @@ function renderNotice() {
 }
 
 function renderLobby() {
-  if (!isOnlineMode()) {
+  const showLobby = isOnlineMode() && session.phase !== "active" && session.phase !== "completed";
+  if (!showLobby) {
     els.lobbyPanel.hidden = true;
+    els.queueSection.hidden = true;
     els.queueList.innerHTML = "";
     return;
   }
 
   els.lobbyPanel.hidden = false;
   updateInputValue(els.displayNameInput, session.profileName);
+  const accepted = hasAcceptedName();
+  els.queueSection.hidden = !accepted || session.phase !== "waiting";
 
-  const hasName = Boolean(session.profileName.trim());
-  els.createGameButton.disabled = !hasName || session.role !== "unassigned";
-  els.leaveGameButton.hidden = session.role === "unassigned";
-  els.leaveGameButton.disabled = session.role === "unassigned";
-
-  if (session.phase === "lobby") {
-    els.lobbyCopy.textContent = "Pick a name, open a table, or join a waiting challenger queue below.";
-  } else if (session.phase === "waiting") {
-    els.lobbyCopy.textContent = `${state.players[0].name} is waiting for a challenger at table ${session.currentGameId}.`;
-  } else if (session.phase === "active") {
-    els.lobbyCopy.textContent = `Table ${session.currentGameId} is live: ${state.players[0].name} vs ${state.players[1].name}.`;
-  } else if (session.phase === "completed") {
-    els.lobbyCopy.textContent = session.notice || `Table ${session.currentGameId} is complete.`;
-  } else {
-    els.lobbyCopy.textContent = session.notice || "Connecting to the live lobby...";
-  }
-
-  if (session.waitingGames.length === 0) {
-    els.queueList.innerHTML = '<p class="queue-empty">No open tables right now.</p>';
+  if (!accepted) {
+    els.lobbyCopy.textContent = session.notice
+      || (session.reconnecting ? "Trying to reconnect..." : "Enter your name and press Enter to see challengers.");
+    els.queueList.innerHTML = "";
     return;
   }
 
-  els.queueList.innerHTML = session.waitingGames.map((game) => `
-    <div class="queue-card${game.isMine ? " is-mine" : ""}">
+  els.lobbyCopy.textContent = session.notice
+    || (session.reconnecting ? "Trying to reconnect..." : "Choose a challenger below.");
+
+  if (session.waitingGames.length === 0) {
+    els.queueList.innerHTML = '<p class="queue-empty">No challengers waiting right now.</p>';
+    return;
+  }
+
+  els.queueList.innerHTML = session.waitingGames.map((game, index) => `
+    <div class="queue-card">
       <div>
-        <strong>${game.hostName}</strong>
-        <span>Table ${game.id}</span>
+        <strong>${index + 1}. ${game.hostName}</strong>
+        <span>Waiting now.</span>
       </div>
-      <button class="secondary-button compact-button" type="button" data-join-game="${game.id}" ${(!hasName || session.role !== "unassigned" || game.isMine) ? "disabled" : ""}>
-        ${game.isMine ? "Your Table" : "Join"}
+      <button class="secondary-button compact-button" type="button" data-join-game="${game.id}">
+        Challenge
       </button>
     </div>
   `).join("");
@@ -490,8 +486,7 @@ function renderScoreboard() {
 
 function renderStatus() {
   const totals = state.players.map(getPlayerTotals);
-  const ownedSeat = isOnlineMode() ? session.playerIndex : null;
-  const turnSeat = state.currentPlayer + 1;
+  const ownedSeat = isOnlineMode() && session.phase === "active" ? session.playerIndex : null;
   const online = isOnlineMode();
 
   updateInputValue(els.playerOneInput, state.players[0].name);
@@ -513,20 +508,8 @@ function renderStatus() {
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
   els.rollButton.textContent = `Roll (${isGameOver() ? 0 : state.rollsLeft})`;
 
-  if (online) {
-    let bannerText = "";
-    if (session.role === "player1" || session.role === "player2") {
-      bannerText = `You are ${state.players[session.playerIndex].name} at table ${session.currentGameId}. Turn: Player ${turnSeat}.`;
-    } else {
-      bannerText = session.reconnecting ? "Trying to reconnect to the live lobby..." : (session.notice || "Connecting to the live lobby...");
-    }
-
-    els.sessionBanner.hidden = false;
-    els.sessionBanner.textContent = bannerText;
-  } else {
-    els.sessionBanner.hidden = true;
-    els.sessionBanner.textContent = "";
-  }
+  els.sessionBanner.hidden = true;
+  els.sessionBanner.textContent = "";
 
   renderNotice();
 
@@ -647,12 +630,13 @@ function applyOnlineSnapshot(snapshot) {
   session.role = snapshot.role;
   session.playerIndex = snapshot.playerIndex;
   session.phase = snapshot.lobby?.phase || "lobby";
-  session.notice = snapshot.lobby?.message || "";
+  session.notice = "";
   session.reconnecting = false;
   session.waitingGames = snapshot.lobby?.waitingGames || [];
   session.currentGameId = snapshot.game?.id || snapshot.lobby?.currentGameId || null;
   if (typeof snapshot.profileName === "string") {
-    session.profileName = snapshot.profileName.slice(0, 24);
+    const nextProfileName = snapshot.profileName.trim() ? snapshot.profileName.slice(0, 24) : session.profileName;
+    session.profileName = nextProfileName;
     saveProfileName(session.profileName);
   }
   state = normalizeState(snapshot.state);
@@ -683,6 +667,11 @@ async function submitProfileUpdate() {
     return;
   }
 
+  if (!session.profileName.trim() && !hasAcceptedName()) {
+    render();
+    return;
+  }
+
   try {
     const snapshot = await fetchJson("/api/profile", {
       method: "POST",
@@ -690,23 +679,12 @@ async function submitProfileUpdate() {
     });
     applyOnlineSnapshot(snapshot);
   } catch (error) {
-    session.notice = error.message || "Could not update your name.";
-    render();
-  }
-}
-
-async function createOnlineGame() {
-  try {
-    const snapshot = await fetchJson("/api/lobby/create", {
-      method: "POST",
-      body: JSON.stringify({ clientId: session.clientId, name: session.profileName }),
-    });
-    applyOnlineSnapshot(snapshot);
-  } catch (error) {
     if (error.payload?.snapshot) {
       applyOnlineSnapshot(error.payload.snapshot);
+      session.notice = error.message || "Could not update your name.";
+      render();
     } else {
-      session.notice = error.message || "Could not open a table.";
+      session.notice = error.message || "Could not update your name.";
       render();
     }
   }
@@ -722,23 +700,12 @@ async function joinOnlineGame(gameId) {
   } catch (error) {
     if (error.payload?.snapshot) {
       applyOnlineSnapshot(error.payload.snapshot);
+      session.notice = error.message || "Could not challenge that player.";
+      render();
     } else {
-      session.notice = error.message || "Could not join that table.";
+      session.notice = error.message || "Could not challenge that player.";
       render();
     }
-  }
-}
-
-async function leaveOnlineGame() {
-  try {
-    const snapshot = await fetchJson("/api/lobby/leave", {
-      method: "POST",
-      body: JSON.stringify({ clientId: session.clientId }),
-    });
-    applyOnlineSnapshot(snapshot);
-  } catch (error) {
-    session.notice = error.message || "Could not leave the table.";
-    render();
   }
 }
 
@@ -794,24 +761,19 @@ els.newGameButton.addEventListener("click", () => {
   resetGameLocal();
 });
 
-els.createGameButton.addEventListener("click", () => {
-  if (session.profileName.trim()) {
-    createOnlineGame();
-  }
-});
-
-els.leaveGameButton.addEventListener("click", () => {
-  leaveOnlineGame();
-});
-
 els.displayNameInput.addEventListener("input", (event) => {
   session.profileName = String(event.target.value || "").slice(0, 24);
-  saveProfileName(session.profileName);
+  session.notice = "";
   render();
 });
 
-els.displayNameInput.addEventListener("change", () => {
-  submitProfileUpdate();
+els.displayNameInput.addEventListener("keydown", (event) => {
+  if (event.key !== "Enter") {
+    return;
+  }
+
+  event.preventDefault();
+  event.target.blur();
 });
 
 els.displayNameInput.addEventListener("blur", () => {
@@ -882,7 +844,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=26").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=27").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

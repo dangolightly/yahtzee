@@ -5,6 +5,7 @@ const path = require("path");
 const DEFAULT_PORT = Number(process.env.PORT || 4173);
 const SESSION_TIMEOUT_MS = 3 * 60 * 1000;
 const COMPLETED_GAME_TTL_MS = 10 * 60 * 1000;
+const MAX_WAITING_GAMES = 10;
 const root = __dirname;
 
 const categories = [
@@ -72,6 +73,15 @@ function normalizeName(name, fallback = "Player") {
   return String(name || "").trim().slice(0, 24) || fallback;
 }
 
+function hasProvidedName(name) {
+  return String(name || "").trim().length > 0;
+}
+
+function formatUniqueWaitingName(baseName, suffix) {
+  const suffixText = String(suffix);
+  return `${baseName.slice(0, Math.max(0, 24 - suffixText.length))}${suffixText}`;
+}
+
 function generateGameId() {
   return Math.random().toString(36).slice(2, 8).toUpperCase();
 }
@@ -83,7 +93,7 @@ function createGame(hostClientId, hostName) {
     id: gameId,
     status: "waiting",
     players: [seat, null],
-    state: createGameState([hostName, "Open Seat"]),
+    state: createGameState([hostName, "Challenger"]),
     notice: `${hostName} is waiting for a challenger.`,
     createdAt: Date.now(),
     updatedAt: Date.now(),
@@ -232,7 +242,7 @@ function touchSeat(game, playerIndex) {
 
 function syncGameNames(game) {
   game.state.players.forEach((player, index) => {
-    const fallback = index === 0 ? "Player 1" : game.status === "waiting" ? "Open Seat" : `Player ${index + 1}`;
+    const fallback = index === 0 ? "Player 1" : game.status === "waiting" ? "Challenger" : `Player ${index + 1}`;
     player.name = game.players[index]?.name || player.name || fallback;
   });
 }
@@ -248,14 +258,43 @@ function findMembership(clientId) {
   return null;
 }
 
-function listWaitingGames(clientId) {
+function getWaitingGames() {
   return [...games.values()]
     .filter((game) => game.status === "waiting" && game.players[0])
-    .sort((left, right) => left.createdAt - right.createdAt)
+    .sort((left, right) => left.createdAt - right.createdAt);
+}
+
+function getUniqueWaitingName(name, excludeClientId = null) {
+  const baseName = normalizeName(name, "Player");
+  const reservedNames = new Set(
+    getWaitingGames()
+      .filter((game) => game.players[0] && game.players[0].clientId !== excludeClientId)
+      .map((game) => game.players[0].name.toLowerCase()),
+  );
+
+  if (!reservedNames.has(baseName.toLowerCase())) {
+    return baseName;
+  }
+
+  let suffix = 2;
+  while (suffix < 10_000) {
+    const candidate = formatUniqueWaitingName(baseName, suffix);
+    if (!reservedNames.has(candidate.toLowerCase())) {
+      return candidate;
+    }
+    suffix += 1;
+  }
+
+  return formatUniqueWaitingName(baseName, Date.now() % 10_000);
+}
+
+function listWaitingGames(clientId) {
+  return getWaitingGames()
+    .filter((game) => !clientId || game.players[0].clientId !== clientId)
+    .slice(0, MAX_WAITING_GAMES)
     .map((game) => ({
       id: game.id,
       hostName: game.players[0].name,
-      isMine: Boolean(game.players[0] && game.players[0].clientId === clientId),
       createdAt: game.createdAt,
       updatedAt: game.updatedAt,
     }));
@@ -263,16 +302,12 @@ function listWaitingGames(clientId) {
 
 function buildLobbyMessage(clientId, membership) {
   if (!membership) {
-    return listWaitingGames(clientId).length > 0
-      ? "Pick a name, then join an open table or open your own."
-      : "Pick a name and open a table for someone to join.";
+    return "Enter your name to see the challenger list.";
   }
 
   const { game, playerIndex } = membership;
   if (game.status === "waiting") {
-    return playerIndex === 0
-      ? `${game.players[0].name} is waiting for a challenger.`
-      : "Waiting for the table to go live.";
+    return playerIndex === 0 ? "Choose a challenger or wait to be picked." : "Game on.";
   }
 
   if (game.status === "completed") {
@@ -413,35 +448,29 @@ function ensureAvailable(clientId) {
 }
 
 function createLobbyGame(clientId, name) {
-  sweepExpiredGames();
-  if (ensureAvailable(clientId)) {
-    return { ok: false, error: "Leave your current table before opening a new one.", snapshot: buildSnapshot(clientId) };
-  }
-
-  const nextName = normalizeName(name, "Player 1");
-  profiles.set(clientId, nextName);
-  createGame(clientId, nextName);
-  return { ok: true, snapshot: buildSnapshot(clientId) };
+  return acceptProfileName(clientId, name);
 }
 
 function joinLobbyGame(clientId, gameId, name) {
   sweepExpiredGames();
-  if (ensureAvailable(clientId)) {
-    return { ok: false, error: "Leave your current table before joining another.", snapshot: buildSnapshot(clientId) };
+  const membership = ensureAvailable(clientId);
+  if (!membership || membership.game.status !== "waiting" || membership.playerIndex !== 0) {
+    return { ok: false, error: "Enter your name first.", snapshot: buildSnapshot(clientId) };
   }
 
   const game = games.get(gameId);
-  if (!game || game.status !== "waiting" || !game.players[0] || game.players[1]) {
-    return { ok: false, error: "That table is no longer available.", snapshot: buildSnapshot(clientId) };
+  if (!game || game.status !== "waiting" || !game.players[0] || game.players[1] || game.id === membership.game.id) {
+    return { ok: false, error: "That challenger is no longer available.", snapshot: buildSnapshot(clientId) };
   }
 
-  const nextName = normalizeName(name, "Player 2");
-  profiles.set(clientId, nextName);
-  game.players[1] = createSeat(clientId, nextName);
+  const challengerName = membership.game.players[0].name || normalizeName(name, "Player 2");
+  profiles.set(clientId, challengerName);
+  games.delete(membership.game.id);
+  game.players[1] = createSeat(clientId, challengerName);
   game.status = "active";
   game.notice = "";
   game.completedAt = null;
-  game.state = createGameState([game.players[0].name, game.players[1].name]);
+  game.state = createGameState([game.players[0].name, challengerName]);
   touchGame(game);
   return { ok: true, snapshot: buildSnapshot(clientId) };
 }
@@ -471,21 +500,36 @@ function leaveCurrentGame(clientId) {
   return { ok: true, snapshot: buildSnapshot(clientId) };
 }
 
-function updateProfile(clientId, name) {
-  const nextName = normalizeName(name, "Player");
-  profiles.set(clientId, nextName);
-
-  const membership = findMembership(clientId);
-  if (membership) {
-    membership.game.players[membership.playerIndex].name = nextName;
-    membership.game.state.players[membership.playerIndex].name = nextName;
-    if (membership.game.status === "waiting") {
-      membership.game.notice = `${nextName} is waiting for a challenger.`;
-    }
-    touchSeat(membership.game, membership.playerIndex);
+function acceptProfileName(clientId, name) {
+  sweepExpiredGames();
+  if (!hasProvidedName(name)) {
+    return { ok: false, error: "Enter your name first.", snapshot: buildSnapshot(clientId) };
   }
 
-  return buildSnapshot(clientId);
+  const membership = ensureAvailable(clientId);
+  if (!membership) {
+    const nextName = getUniqueWaitingName(name, clientId);
+    profiles.set(clientId, nextName);
+    createGame(clientId, nextName);
+    return { ok: true, snapshot: buildSnapshot(clientId) };
+  }
+
+  if (membership.game.status === "waiting") {
+    const nextName = getUniqueWaitingName(name, clientId);
+    profiles.set(clientId, nextName);
+    membership.game.players[0].name = nextName;
+    membership.game.state.players[0].name = nextName;
+    membership.game.notice = `${nextName} is waiting for a challenger.`;
+    touchSeat(membership.game, 0);
+    return { ok: true, snapshot: buildSnapshot(clientId) };
+  }
+
+  const nextName = normalizeName(name, "Player");
+  profiles.set(clientId, nextName);
+  membership.game.players[membership.playerIndex].name = nextName;
+  membership.game.state.players[membership.playerIndex].name = nextName;
+  touchSeat(membership.game, membership.playerIndex);
+  return { ok: true, snapshot: buildSnapshot(clientId) };
 }
 
 function ensureActiveTurn(clientId) {
@@ -663,7 +707,13 @@ async function handleApi(request, response, url) {
         return true;
       }
 
-      sendJson(response, 200, updateProfile(clientId, body.name));
+      const result = acceptProfileName(clientId, body.name);
+      if (!result.ok) {
+        sendJson(response, 409, result);
+        return true;
+      }
+
+      sendJson(response, 200, result.snapshot);
       return true;
     } catch (error) {
       sendJson(response, 400, { ok: false, error: error.message });
@@ -773,7 +823,7 @@ async function handleApi(request, response, url) {
   if (request.method === "GET" && url.pathname === "/api/health") {
     sendJson(response, 200, {
       ok: true,
-      waitingGames: listWaitingGames("").length,
+      waitingGames: getWaitingGames().length,
       totalGames: games.size,
     });
     return true;

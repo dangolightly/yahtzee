@@ -93,8 +93,8 @@ input {
 
 .lobby-head {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
   align-items: end;
 }
 
@@ -120,20 +120,17 @@ input {
   color: var(--text);
 }
 
-.lobby-actions {
-  display: flex;
-  gap: 6px;
-}
-
 .lobby-copy {
-  margin: 8px 0 6px;
+  margin: 2px 0 0;
   color: var(--muted);
   font-size: 0.84rem;
+  line-height: 1.3;
 }
 
 .queue-section {
   display: grid;
   gap: 6px;
+  margin-top: 8px;
 }
 
 .queue-heading {
@@ -618,11 +615,6 @@ thead th:first-child,
 @media (max-width: 620px) {
   .lobby-head {
     grid-template-columns: 1fr;
-  }
-
-  .lobby-actions {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
   }
 
   .queue-card,

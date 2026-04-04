@@ -11,7 +11,7 @@
     <link rel="manifest" href="manifest.webmanifest" />
     <link rel="icon" href="icon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="icon.svg" />
-    <link rel="stylesheet" href="styles.css?v=26" />
+    <link rel="stylesheet" href="styles.css?v=27" />
   </head>
   <body>
     <div class="app-shell">
@@ -38,15 +38,11 @@
           <label class="name-field" for="display-name-input">
             <span>Your name</span>
             <input id="display-name-input" maxlength="24" autocomplete="name" />
+            <p id="lobby-copy" class="lobby-copy"></p>
           </label>
-          <div class="lobby-actions">
-            <button id="create-game-button" class="primary-button compact-button" type="button">Open Table</button>
-            <button id="leave-game-button" class="secondary-button compact-button" type="button">Leave</button>
-          </div>
         </div>
-        <p id="lobby-copy" class="lobby-copy"></p>
-        <div class="queue-section">
-          <p class="queue-heading">Open Tables</p>
+        <div id="queue-section" class="queue-section" hidden>
+          <p class="queue-heading">Challenger List</p>
           <div id="queue-list" class="queue-list"></div>
         </div>
       </section>
@@ -71,7 +67,7 @@
           <table>
             <thead>
               <tr>
-                <th>Category <span class="category-version">(Version 0.1)</span></th>
+                <th>Category <span class="category-version">(Version 0.2)</span></th>
                 <th id="player-one-heading">Player 1</th>
                 <th id="player-two-heading">Player 2</th>
               </tr>
@@ -89,6 +85,6 @@
       </button>
     </template>
 
-    <script type="module" src="app.js?v=26"></script>
+    <script type="module" src="app.js?v=27"></script>
   </body>
 </html>

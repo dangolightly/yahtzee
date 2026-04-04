@@ -486,10 +486,14 @@ input {
   transform-origin: center center;
   z-index: 58;
   width: min(90vw, 420px);
-  padding: 10px 12px;
-  border-radius: 14px;
-  border: 1px solid rgba(255, 255, 255, 0.24);
-  box-shadow: 0 20px 30px rgba(0, 0, 0, 0.34);
+  padding: 26px 34px;
+  clip-path: polygon(50% 0%, 58% 12%, 74% 2%, 72% 18%, 90% 12%, 82% 30%, 100% 32%, 86% 44%, 98% 56%, 82% 60%, 90% 76%, 72% 70%, 74% 88%, 58% 78%, 50% 100%, 42% 78%, 26% 88%, 28% 70%, 10% 76%, 18% 60%, 2% 56%, 14% 44%, 0% 32%, 18% 30%, 10% 12%, 28% 18%, 26% 2%, 42% 12%);
+  border: 2px solid rgba(123, 63, 0, 0.55);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 224, 156, 0.95), transparent 48%),
+    conic-gradient(from 28deg, #ffb347, #ff8c1a, #ffd18a, #ff7a00, #ffc36d, #ff9a2f, #ffe2a7, #ff8f1f, #ffb347);
+  color: #111111;
+  box-shadow: 0 0 0 2px rgba(255, 168, 77, 0.4), 0 22px 34px rgba(0, 0, 0, 0.34);
   opacity: 0;
   pointer-events: none;
   transition: transform 180ms ease, opacity 180ms ease;
@@ -516,31 +520,23 @@ input {
 }
 
 .fun-flash.indicator-spark {
-  background: linear-gradient(145deg, rgba(37, 60, 120, 0.98), rgba(24, 39, 79, 0.98));
-  color: #f4f7ff;
+  box-shadow: 0 0 0 2px rgba(255, 177, 81, 0.48), 0 22px 34px rgba(0, 0, 0, 0.34);
 }
 
 .fun-flash.indicator-buzz {
-  background: linear-gradient(145deg, rgba(38, 88, 75, 0.98), rgba(20, 57, 49, 0.98));
-  color: #ecfff8;
+  box-shadow: 0 0 0 2px rgba(255, 140, 26, 0.52), 0 22px 34px rgba(0, 0, 0, 0.34);
 }
 
 .fun-flash.indicator-crown {
-  background: linear-gradient(145deg, rgba(112, 76, 19, 0.98), rgba(63, 40, 10, 0.98));
-  color: #fff9e6;
+  box-shadow: 0 0 0 2px rgba(255, 196, 101, 0.5), 0 22px 34px rgba(0, 0, 0, 0.34);
 }
 
 .fun-flash.indicator-glitch {
-  background: linear-gradient(145deg, rgba(78, 33, 106, 0.98), rgba(36, 16, 66, 0.98));
-  color: #f4ecff;
   animation: flash-glitch 260ms steps(2) 3;
 }
 
 .fun-flash.indicator-wild {
-  background: linear-gradient(145deg, rgba(186, 47, 85, 0.98), rgba(106, 22, 58, 0.98), rgba(34, 20, 95, 0.98));
-  color: #fff5f8;
-  border-color: rgba(255, 209, 102, 0.7);
-  box-shadow: 0 0 0 1px rgba(255, 209, 102, 0.42), 0 24px 40px rgba(102, 37, 118, 0.52);
+  box-shadow: 0 0 0 3px rgba(255, 191, 96, 0.58), 0 28px 42px rgba(0, 0, 0, 0.42);
   animation: flash-wild 740ms ease-in-out 2;
 }
 

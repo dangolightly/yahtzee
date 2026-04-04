@@ -28,6 +28,16 @@ body {
   height: 100%;
 }
 
+html {
+  background:
+    radial-gradient(circle at 12% 5%, rgba(255, 183, 3, 0.38), transparent 28%),
+    radial-gradient(circle at 88% 12%, rgba(94, 234, 212, 0.26), transparent 24%),
+    radial-gradient(circle at 18% 90%, rgba(255, 107, 53, 0.24), transparent 32%),
+    radial-gradient(circle at 80% 82%, rgba(127, 90, 240, 0.22), transparent 30%),
+    linear-gradient(180deg, var(--bg), var(--bg-deep));
+  background-color: var(--bg-deep);
+}
+
 body {
   min-height: 100dvh;
   overflow: hidden;
@@ -37,6 +47,7 @@ body {
     radial-gradient(circle at 18% 90%, rgba(255, 107, 53, 0.24), transparent 32%),
     radial-gradient(circle at 80% 82%, rgba(127, 90, 240, 0.22), transparent 30%),
     linear-gradient(180deg, var(--bg), var(--bg-deep));
+  background-color: var(--bg-deep);
   color: var(--text);
   font-family: "Avenir Next", "Trebuchet MS", sans-serif;
 }
@@ -47,7 +58,7 @@ input {
 }
 
 .app-shell {
-  height: 100dvh;
+  min-height: 100dvh;
   width: min(100%, 920px);
   margin: 0 auto;
   padding: calc(env(safe-area-inset-top, 0px) + 10px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px);

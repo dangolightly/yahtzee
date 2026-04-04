@@ -1,4 +1,4 @@
-const CACHE_NAME = "yahtzee-cabin-v1";
+const CACHE_NAME = "yahtzee-cabin-v2";
 const APP_ASSETS = [
   "./",
   "./index.html",
@@ -29,19 +29,30 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  event.respondWith(
-    caches.match(event.request).then((cachedResponse) => {
-      if (cachedResponse) {
-        return cachedResponse;
-      }
+  const requestUrl = new URL(event.request.url);
+  const isAppAsset = APP_ASSETS.some((asset) => requestUrl.pathname.endsWith(asset.replace("./", "/"))) || requestUrl.pathname.endsWith("/yahtzee/") || requestUrl.pathname.endsWith("/yahtzee");
 
-      return fetch(event.request)
-        .then((networkResponse) => {
-          const copy = networkResponse.clone();
-          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
-          return networkResponse;
-        })
-        .catch(() => caches.match("./index.html"));
-    }),
+  event.respondWith(
+    (isAppAsset
+      ? fetch(event.request)
+          .then((networkResponse) => {
+            const copy = networkResponse.clone();
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+            return networkResponse;
+          })
+          .catch(() => caches.match(event.request).then((cachedResponse) => cachedResponse || caches.match("./index.html")))
+      : caches.match(event.request).then((cachedResponse) => {
+          if (cachedResponse) {
+            return cachedResponse;
+          }
+
+          return fetch(event.request)
+            .then((networkResponse) => {
+              const copy = networkResponse.clone();
+              caches.open(CACHE_NAME).then((cache) => cache.put(event.request, copy));
+              return networkResponse;
+            })
+            .catch(() => caches.match("./index.html"));
+        })),
   );
 });

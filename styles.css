@@ -353,6 +353,7 @@ input {
 .scoreboard-panel {
   min-height: 0;
   height: 100%;
+  grid-row: -2 / -1;
 }
 
 .scoreboard-wrap {
@@ -382,7 +383,7 @@ td {
 }
 
 th {
-  font-size: 0.76rem;
+  font-size: 0.8rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -396,7 +397,7 @@ thead th:first-child,
 .section-row td {
   padding-top: 7px;
   padding-bottom: 4px;
-  font-size: 0.7rem;
+  font-size: 0.74rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -404,7 +405,7 @@ thead th:first-child,
 }
 
 .category-label {
-  font-size: 1.02rem;
+  font-size: 1.08rem;
   font-weight: 700;
 }
 
@@ -430,7 +431,7 @@ thead th:first-child,
   border-radius: 999px;
   display: grid;
   place-items: center;
-  font-size: 0.96rem;
+  font-size: 1.02rem;
   font-weight: 700;
 }
 
@@ -481,7 +482,7 @@ thead th:first-child,
 .totals-row td,
 .winner-row td {
   background: rgba(255, 255, 255, 0.1);
-  font-size: 0.9rem;
+  font-size: 0.96rem;
 }
 
 .winner-row td {
@@ -512,15 +513,15 @@ thead th:first-child,
   .score-button,
   .score-value,
   .score-open {
-    font-size: 0.86rem;
+    font-size: 0.92rem;
   }
 
   th {
-    font-size: 0.68rem;
+    font-size: 0.72rem;
   }
 
   .section-row td {
-    font-size: 0.62rem;
+    font-size: 0.66rem;
   }
 
   .score-cell.stagger-left .score-button.is-active,

@@ -1,11 +1,11 @@
 {
   "version": "1.0",
   "displayIndicators": [
-    { "id": "spark", "label": "Spark Burst", "emoji": "✨" },
-    { "id": "buzz", "label": "Crowd Buzz", "emoji": "🎺" },
-    { "id": "crown", "label": "Royal Flex", "emoji": "👑" },
-    { "id": "glitch", "label": "Dice Glitch", "emoji": "⚡" },
-    { "id": "wild", "label": "YAHTZEE MELTDOWN", "emoji": "🔥" }
+    { "id": "spark", "label": "Spark Burst", "emoji": "*" },
+    { "id": "buzz", "label": "Crowd Buzz", "emoji": ">>" },
+    { "id": "crown", "label": "Royal Flex", "emoji": "^^" },
+    { "id": "glitch", "label": "Dice Glitch", "emoji": "!!" },
+    { "id": "wild", "label": "YAHTZEE MELTDOWN", "emoji": "!!!" }
   ],
   "scores": {
     "ones": [

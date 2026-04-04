@@ -345,13 +345,16 @@ function renderScoreCell(category, playerIndex, rowIndex) {
 function renderCategoryRows(sectionName, sectionKey) {
   const rows = categories
     .filter((category) => category.section === sectionKey)
-    .map((category, rowIndex) => `
+    .map((category) => {
+      const rowIndex = categories.findIndex((entry) => entry.key === category.key);
+      return `
       <tr>
         <td class="category-label">${category.label}</td>
         ${renderScoreCell(category, 0, rowIndex)}
         ${renderScoreCell(category, 1, rowIndex)}
       </tr>
-    `)
+    `;
+    })
     .join("");
 
   return `

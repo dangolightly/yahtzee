@@ -1,108 +1,88 @@
 {
   "version": "1.2",
-  "enabled": "off",
+  "enabled": "on",
   "scores": {
     "ones": {
       "enabled": "on",
       "choices": [
         {
           "text": "Ones patrol says the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Ones patrol says the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
@@ -112,102 +92,82 @@
       "choices": [
         {
           "text": "Twos committee confirms the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Twos committee confirms the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
@@ -217,102 +177,82 @@
       "choices": [
         {
           "text": "Threes orchestra announces the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Threes orchestra announces the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
@@ -322,102 +262,82 @@
       "choices": [
         {
           "text": "Fours engine reports the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Fours engine reports the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
@@ -427,102 +347,82 @@
       "choices": [
         {
           "text": "Fives fan club says the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Fives fan club says the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
@@ -532,102 +432,82 @@
       "choices": [
         {
           "text": "Sixes department declares the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Sixes department declares the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
@@ -637,102 +517,82 @@
       "choices": [
         {
           "text": "Three-kind hotline reports the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Three-kind hotline reports the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
@@ -742,102 +602,82 @@
       "choices": [
         {
           "text": "Four-kind tribunal confirms the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Four-kind tribunal confirms the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
@@ -847,102 +687,82 @@
       "choices": [
         {
           "text": "Full-house landlord says the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Full-house landlord says the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
@@ -952,102 +772,82 @@
       "choices": [
         {
           "text": "Small-straight runway says the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Small-straight runway says the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
@@ -1057,102 +857,82 @@
       "choices": [
         {
           "text": "Large-straight parade says the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Large-straight parade says the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
@@ -1162,102 +942,82 @@
       "choices": [
         {
           "text": "YAHTZEE BROADCAST YAHTZEE ALERT: WINDOWS TREMBLING.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST FIVE OF A KIND: CROWD IN SHOCK.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST MAXIMUM CHAOS MODE: ENABLED.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST THIS ROLL JUST BENT THE RULES.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST CONFETTI BUDGET HAS BEEN EXCEEDED.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST THE DICE ENTERED ORBIT AND CAME BACK WINNING.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST SCOREBOARD IS NOW SCREAMING IN ALL CAPS.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST OPPONENT REQUESTED A MOMENT OF SILENCE.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST THIS TURN HAS ITS OWN ACTION MOVIE TRAILER.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST PROBABILITY FILED A FORMAL COMPLAINT.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST YAHTZEE SIREN: WHOOP WHOOP WHOOP.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST THE TABLE JUST DECLARED A HOLIDAY.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST YOU UNLOCKED LEGENDARY DICE BEHAVIOR.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST THIS IS NOT LUCK, THIS IS PERFORMANCE ART.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST THE CROWD IS THROWING IMAGINARY FLOWERS.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST REALITY BRIEFING FAILED SUCCESSFULLY.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST THE ROOM JUST GOT TEN LEVELS LOUDER.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST ANOTHER YAHTZEE-LIKE EVENT HAS OCCURRED.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST THIS ROLL SHOULD COME WITH FIREWORKS.",
-          "indicator": "wild",
           "enabled": "on"
         },
         {
           "text": "YAHTZEE BROADCAST GRAND FINALE ENERGY IN THE MIDDLE OF THE GAME.",
-          "indicator": "wild",
           "enabled": "on"
         }
       ]
@@ -1267,105 +1027,86 @@
       "choices": [
         {
           "text": "Chance chaos desk says the snack table just applauded.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says someone rang the lucky cowbell.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says the scoreboard asked for your autograph.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says your dice now have stage lighting.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says that move deserves a dramatic zoom.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says the table whispered, wow.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says you just activated confidence mode.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says crowd control cannot stop this momentum.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says the dice are filing a hype report.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says nobody expected that smooth finish.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says legend energy detected on lane one.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says that score just did a backflip.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says the pressure meter broke in your favor.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says style points have entered the chat.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says the opponent looked mildly concerned.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says you made probability blush.",
-          "indicator": "glitch",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says that click sounded expensive.",
-          "indicator": "spark",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says the room temperature rose two degrees.",
-          "indicator": "buzz",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says your luck has excellent timing.",
-          "indicator": "crown",
           "enabled": "on"
         },
         {
           "text": "Chance chaos desk says the victory soundtrack just queued up.",
-          "indicator": "glitch",
           "enabled": "on"
         }
       ]
     }
   }
 }
+

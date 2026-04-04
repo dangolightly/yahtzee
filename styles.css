@@ -215,6 +215,27 @@ input {
   box-shadow: inset 0 0 0 1px rgba(255, 209, 102, 0.24), 0 0 0 2px rgba(255, 209, 102, 0.12);
 }
 
+.player-chip.is-dimmed {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.08);
+  box-shadow: none;
+}
+
+.player-chip.is-dimmed input,
+.player-chip.is-dimmed strong,
+.player-chip.is-dimmed .player-slot {
+  color: rgba(236, 240, 245, 0.55);
+}
+
+.player-chip.is-dimmed .player-slot {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.player-chip.is-dimmed.is-owned {
+  border-color: rgba(255, 209, 102, 0.2);
+  box-shadow: none;
+}
+
 .player-slot {
   width: 24px;
   height: 24px;
@@ -312,7 +333,7 @@ input {
 
 .dice-strip {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 86px;
+  grid-template-columns: minmax(0, 1fr) 112px;
   gap: 4px;
   align-items: stretch;
 }
@@ -355,6 +376,27 @@ input {
 .roll-button {
   min-height: 42px;
   border-radius: 16px;
+  padding: 0 10px;
+  font-size: 0.82rem;
+  line-height: 1.15;
+}
+
+.roll-button.is-your-turn:disabled {
+  opacity: 1;
+  box-shadow: 0 10px 22px rgba(76, 168, 111, 0.18);
+}
+
+.roll-button.is-their-turn {
+  background: linear-gradient(180deg, rgba(196, 204, 214, 0.72), rgba(121, 131, 143, 0.92));
+  color: #eef3f8;
+  box-shadow: none;
+}
+
+.roll-button.is-their-turn:disabled {
+  opacity: 1;
+  background: linear-gradient(180deg, rgba(196, 204, 214, 0.72), rgba(121, 131, 143, 0.92));
+  color: #eef3f8;
+  border: 1px solid rgba(255, 255, 255, 0.12);
 }
 
 .install-warning {
@@ -673,7 +715,7 @@ thead th:first-child,
   }
 
   .dice-strip {
-    grid-template-columns: minmax(0, 1fr) 74px;
+    grid-template-columns: minmax(0, 1fr) 102px;
   }
 
   .die,

@@ -3,8 +3,9 @@ const fs = require("fs");
 const path = require("path");
 
 const DEFAULT_PORT = Number(process.env.PORT || 4173);
-const SESSION_TIMEOUT_MS = 3 * 60 * 1000;
+const SESSION_TIMEOUT_MS = 5 * 60 * 1000;
 const COMPLETED_GAME_TTL_MS = 10 * 60 * 1000;
+const DISCONNECT_GRACE_MS = 12 * 1000;
 const MAX_WAITING_GAMES = 10;
 const root = __dirname;
 
@@ -66,6 +67,7 @@ function createSeat(clientId, name) {
     clientId,
     name,
     lastSeen: Date.now(),
+    disconnectRequestedAt: null,
   };
 }
 
@@ -236,6 +238,7 @@ function touchSeat(game, playerIndex) {
   const seat = game.players[playerIndex];
   if (seat) {
     seat.lastSeen = Date.now();
+    seat.disconnectRequestedAt = null;
     touchGame(game);
   }
 }
@@ -290,6 +293,7 @@ function getUniqueWaitingName(name, excludeClientId = null) {
 
 function listWaitingGames(clientId) {
   return getWaitingGames()
+    .filter((game) => !game.players[0].disconnectRequestedAt)
     .filter((game) => !clientId || game.players[0].clientId !== clientId)
     .slice(0, MAX_WAITING_GAMES)
     .map((game) => ({
@@ -401,8 +405,25 @@ function concludeByDefault(game, playerIndex, reason) {
   touchGame(game);
 }
 
+function markClientDisconnected(clientId) {
+  const membership = findMembership(clientId);
+  if (!membership) {
+    return false;
+  }
+
+  const seat = membership.game.players[membership.playerIndex];
+  if (!seat || membership.game.status === "completed") {
+    return false;
+  }
+
+  seat.disconnectRequestedAt = Date.now();
+  touchGame(membership.game);
+  return true;
+}
+
 function sweepExpiredGames() {
   const cutoff = Date.now() - SESSION_TIMEOUT_MS;
+  const disconnectCutoff = Date.now() - DISCONNECT_GRACE_MS;
 
   for (const [gameId, game] of games.entries()) {
     if (game.status === "completed") {
@@ -414,14 +435,23 @@ function sweepExpiredGames() {
     }
 
     if (game.status === "waiting") {
-      if (!game.players[0] || game.players[0].lastSeen < cutoff) {
+      if (!game.players[0] || game.players[0].lastSeen < cutoff || (game.players[0].disconnectRequestedAt && game.players[0].disconnectRequestedAt < disconnectCutoff)) {
         games.delete(gameId);
       }
       continue;
     }
 
     game.players.forEach((seat, index) => {
-      if (seat && seat.lastSeen < cutoff && game.status === "active") {
+      if (!seat || game.status !== "active") {
+        return;
+      }
+
+      if (seat.disconnectRequestedAt && seat.disconnectRequestedAt < disconnectCutoff) {
+        concludeByDefault(game, index, "left the game");
+        return;
+      }
+
+      if (seat.lastSeen < cutoff) {
         concludeByDefault(game, index, "timed out");
       }
     });
@@ -459,7 +489,7 @@ function joinLobbyGame(clientId, gameId, name) {
   }
 
   const game = games.get(gameId);
-  if (!game || game.status !== "waiting" || !game.players[0] || game.players[1] || game.id === membership.game.id) {
+  if (!game || game.status !== "waiting" || !game.players[0] || game.players[0].disconnectRequestedAt || game.players[1] || game.id === membership.game.id) {
     return { ok: false, error: "That challenger is no longer available.", snapshot: buildSnapshot(clientId) };
   }
 
@@ -496,7 +526,7 @@ function leaveCurrentGame(clientId) {
     return { ok: true, snapshot: buildSnapshot(clientId) };
   }
 
-  concludeByDefault(game, playerIndex, "left the table");
+  concludeByDefault(game, playerIndex, "left the game");
   return { ok: true, snapshot: buildSnapshot(clientId) };
 }
 
@@ -827,6 +857,24 @@ async function handleApi(request, response, url) {
       totalGames: games.size,
     });
     return true;
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/session/disconnect") {
+    try {
+      const body = await parseJson(request);
+      const clientId = String(body.clientId || "");
+      if (!clientId) {
+        sendJson(response, 400, { ok: false, error: "Missing clientId" });
+        return true;
+      }
+
+      markClientDisconnected(clientId);
+      sendJson(response, 200, { ok: true });
+      return true;
+    } catch (error) {
+      sendJson(response, 400, { ok: false, error: error.message });
+      return true;
+    }
   }
 
   return false;

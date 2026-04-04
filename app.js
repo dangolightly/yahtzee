@@ -191,6 +191,7 @@ const session = {
   reconnecting: false,
   waitingGames: [],
   currentGameId: null,
+  disconnectSent: false,
 };
 
 function getCounts(dice) {
@@ -338,6 +339,30 @@ function canCurrentClientAct() {
 
 function hasAcceptedName() {
   return isOnlineMode() && ["waiting", "active", "completed"].includes(session.phase);
+}
+
+function sendDisconnectSignal() {
+  if (!isOnlineMode() || session.disconnectSent || !["waiting", "active"].includes(session.phase)) {
+    return;
+  }
+
+  const payload = JSON.stringify({ clientId: session.clientId });
+  session.disconnectSent = true;
+
+  if (navigator.sendBeacon) {
+    const body = new Blob([payload], { type: "application/json" });
+    navigator.sendBeacon("/api/session/disconnect", body);
+    return;
+  }
+
+  fetch("/api/session/disconnect", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: payload,
+    keepalive: true,
+  }).catch(() => {
+    // Best-effort only during unload.
+  });
 }
 
 function renderNotice() {
@@ -504,6 +529,9 @@ function renderStatus() {
   const totals = state.players.map(getPlayerTotals);
   const ownedSeat = isOnlineMode() && session.phase === "active" ? session.playerIndex : null;
   const online = isOnlineMode();
+  const rollsLeft = isGameOver() ? 0 : state.rollsLeft;
+  const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
+  const isMyTurn = isOnlineActiveTurn && ownedSeat === state.currentPlayer;
 
   updateInputValue(els.playerOneInput, state.players[0].name);
   updateInputValue(els.playerTwoInput, state.players[1].name);
@@ -511,10 +539,12 @@ function renderStatus() {
   els.playerTwoHeading.textContent = `${state.players[1].name} (${totals[1].grandTotal})`;
   els.playerOneTotal.textContent = String(totals[0].grandTotal);
   els.playerTwoTotal.textContent = String(totals[1].grandTotal);
-  els.playerOneChip.classList.toggle("is-active", state.currentPlayer === 0);
-  els.playerTwoChip.classList.toggle("is-active", state.currentPlayer === 1);
+  els.playerOneChip.classList.toggle("is-active", isOnlineActiveTurn ? (isMyTurn && ownedSeat === 0) : state.currentPlayer === 0);
+  els.playerTwoChip.classList.toggle("is-active", isOnlineActiveTurn ? (isMyTurn && ownedSeat === 1) : state.currentPlayer === 1);
   els.playerOneChip.classList.toggle("is-owned", ownedSeat === 0);
   els.playerTwoChip.classList.toggle("is-owned", ownedSeat === 1);
+  els.playerOneChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
+  els.playerTwoChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
   els.playerOneSeatTag.hidden = ownedSeat !== 0;
   els.playerTwoSeatTag.hidden = ownedSeat !== 1;
 
@@ -522,7 +552,11 @@ function renderStatus() {
   els.playerTwoInput.disabled = online;
   els.newGameButton.disabled = online ? !(session.phase === "active" || session.phase === "completed") : false;
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
-  els.rollButton.textContent = `Roll (${isGameOver() ? 0 : state.rollsLeft})`;
+  els.rollButton.classList.toggle("is-your-turn", isMyTurn);
+  els.rollButton.classList.toggle("is-their-turn", isOnlineActiveTurn && !isMyTurn);
+  els.rollButton.textContent = isOnlineActiveTurn
+    ? `${isMyTurn ? "Your" : "Their"} Roll (${rollsLeft})`
+    : `Roll (${rollsLeft})`;
 
   els.sessionBanner.hidden = true;
   els.sessionBanner.textContent = "";
@@ -648,6 +682,7 @@ function applyOnlineSnapshot(snapshot) {
   session.phase = snapshot.lobby?.phase || "lobby";
   session.notice = "";
   session.reconnecting = false;
+  session.disconnectSent = false;
   session.waitingGames = snapshot.lobby?.waitingGames || [];
   session.currentGameId = snapshot.game?.id || snapshot.lobby?.currentGameId || null;
   if (typeof snapshot.profileName === "string") {
@@ -755,6 +790,7 @@ async function tryEnableOnlineMode() {
     session.notice = "";
     session.waitingGames = [];
     session.currentGameId = null;
+    session.disconnectSent = false;
     render();
   }
 }
@@ -860,13 +896,21 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=28").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=30").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.
     });
   });
 }
+
+window.addEventListener("pagehide", (event) => {
+  if (event.persisted) {
+    return;
+  }
+
+  sendDisconnectSignal();
+});
 
 render();
 window.addEventListener("load", () => {

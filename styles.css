@@ -58,10 +58,11 @@ input {
 }
 
 .app-shell {
+  height: 100dvh;
   min-height: 100dvh;
   width: min(100%, 920px);
   margin: 0 auto;
-  padding: calc(env(safe-area-inset-top, 0px) + 10px) 8px calc(env(safe-area-inset-bottom, 0px) + 8px);
+  padding: calc(env(safe-area-inset-top, 0px) + 8px) 8px calc(env(safe-area-inset-bottom, 0px) + 4px);
   display: grid;
   grid-template-rows: auto auto auto auto 1fr;
   gap: 6px;
@@ -351,6 +352,7 @@ input {
 
 .scoreboard-panel {
   min-height: 0;
+  height: 100%;
 }
 
 .scoreboard-wrap {
@@ -373,14 +375,14 @@ thead th {
 
 th,
 td {
-  padding: 5px 6px;
+  padding: 6px 7px;
   border-bottom: 1px solid var(--line);
   text-align: left;
   vertical-align: middle;
 }
 
 th {
-  font-size: 0.62rem;
+  font-size: 0.7rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -394,7 +396,7 @@ thead th:first-child,
 .section-row td {
   padding-top: 7px;
   padding-bottom: 4px;
-  font-size: 0.58rem;
+  font-size: 0.64rem;
   letter-spacing: 0.12em;
   text-transform: uppercase;
   color: var(--muted);
@@ -402,7 +404,7 @@ thead th:first-child,
 }
 
 .category-label {
-  font-size: 0.84rem;
+  font-size: 0.94rem;
   font-weight: 700;
 }
 
@@ -424,11 +426,11 @@ thead th:first-child,
 .score-value,
 .score-open {
   width: 100%;
-  min-height: 24px;
+  min-height: 28px;
   border-radius: 999px;
   display: grid;
   place-items: center;
-  font-size: 0.78rem;
+  font-size: 0.88rem;
   font-weight: 700;
 }
 
@@ -470,7 +472,7 @@ thead th:first-child,
 .totals-row td,
 .winner-row td {
   background: rgba(255, 255, 255, 0.1);
-  font-size: 0.74rem;
+  font-size: 0.82rem;
 }
 
 .winner-row td {
@@ -501,7 +503,15 @@ thead th:first-child,
   .score-button,
   .score-value,
   .score-open {
-    font-size: 0.74rem;
+    font-size: 0.8rem;
+  }
+
+  th {
+    font-size: 0.64rem;
+  }
+
+  .section-row td {
+    font-size: 0.58rem;
   }
 
   .score-cell.stagger-left .score-button.is-active,
@@ -528,7 +538,7 @@ thead th:first-child,
 
   th,
   td {
-    padding: 4px 5px;
+    padding: 5px 5px;
   }
 }
 

@@ -1,6 +1,6 @@
 :root {
   color-scheme: light;
-  --bg: #eee1c7;
+  --bg: #f3e4c1;
   --bg-deep: #d6bd97;
   --panel: rgba(255, 250, 241, 0.94);
   --line: rgba(43, 30, 21, 0.12);
@@ -8,6 +8,8 @@
   --muted: #6b5748;
   --green: #1f6b52;
   --green-deep: #134a39;
+  --coral: #db6b49;
+  --sky: #7bc5d7;
   --gold: #d7b060;
   --cream: #fffaf1;
   --shadow: 0 14px 28px rgba(51, 35, 23, 0.1);
@@ -30,7 +32,9 @@ body {
   min-height: 100dvh;
   overflow: hidden;
   background:
-    radial-gradient(circle at top, rgba(255, 255, 255, 0.7), transparent 36%),
+    radial-gradient(circle at 15% 0%, rgba(255, 255, 255, 0.78), transparent 32%),
+    radial-gradient(circle at 85% 18%, rgba(123, 197, 215, 0.24), transparent 22%),
+    radial-gradient(circle at 20% 90%, rgba(219, 107, 73, 0.14), transparent 28%),
     linear-gradient(180deg, var(--bg), var(--bg-deep));
   color: var(--text);
   font-family: "Avenir Next", "Trebuchet MS", sans-serif;
@@ -195,7 +199,8 @@ input {
 }
 
 .die.is-held {
-  background: linear-gradient(180deg, #f6e2ad, var(--gold));
+  background: linear-gradient(180deg, #ffe29f, #f2a64d 58%, #db6b49);
+  color: #fff9f0;
 }
 
 .die-value {
@@ -266,7 +271,12 @@ input {
   overflow: hidden;
   margin: 0 2px;
   padding: 10px 12px;
-  background: linear-gradient(135deg, rgba(31, 107, 82, 0.18), rgba(215, 176, 96, 0.28));
+  background: linear-gradient(135deg, rgba(31, 107, 82, 0.24), rgba(123, 197, 215, 0.3), rgba(215, 176, 96, 0.38));
+  border-color: rgba(31, 107, 82, 0.18);
+}
+
+.winner-banner.is-tie {
+  background: linear-gradient(135deg, rgba(123, 197, 215, 0.24), rgba(215, 176, 96, 0.3));
 }
 
 .winner-kicker {
@@ -280,7 +290,7 @@ input {
 .winner-banner h2 {
   margin: 2px 0 4px;
   font-family: "Baskerville", "Georgia", serif;
-  font-size: 1.4rem;
+  font-size: 1.55rem;
 }
 
 .winner-copy {
@@ -293,10 +303,20 @@ input {
   position: absolute;
   inset: 0 0 auto auto;
   padding: 8px 10px;
-  font-size: 1.1rem;
-  letter-spacing: 0.24em;
-  color: rgba(19, 74, 57, 0.35);
+  font-size: 1.05rem;
+  letter-spacing: 0.18em;
+  color: rgba(19, 74, 57, 0.46);
   transform: rotate(-10deg);
+  animation: confetti-bob 1.6s ease-in-out infinite alternate;
+}
+
+@keyframes confetti-bob {
+  from {
+    transform: rotate(-10deg) translateY(0);
+  }
+  to {
+    transform: rotate(-4deg) translateY(4px);
+  }
 }
 
 .scoreboard-panel {

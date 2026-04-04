@@ -17,6 +17,14 @@ const categories = [
 ];
 
 const upperKeys = ["ones", "twos", "threes", "fours", "fives", "sixes"];
+const faceToUpperKey = {
+  1: "ones",
+  2: "twos",
+  3: "threes",
+  4: "fours",
+  5: "fives",
+  6: "sixes",
+};
 
 const els = {
   playerOneInput: document.querySelector("#player-one-input"),
@@ -37,6 +45,7 @@ const els = {
   installWarning: document.querySelector("#install-warning"),
   hintOutput: document.querySelector("#hint-output"),
   winnerBanner: document.querySelector("#winner-banner"),
+  winnerConfetti: document.querySelector("#winner-confetti"),
   winnerTitle: document.querySelector("#winner-title"),
   winnerCopy: document.querySelector("#winner-copy"),
   diceGrid: document.querySelector("#dice-grid"),
@@ -48,7 +57,7 @@ const els = {
 const isOfflineInstallBlocked = !window.isSecureContext && location.hostname !== "localhost" && location.hostname !== "127.0.0.1";
 
 function createPlayer(name) {
-  return { name, scores: {} };
+  return { name, scores: {}, yahtzeeBonus: 0 };
 }
 
 function createNewState(playerNames = ["Player 1", "Player 2"]) {
@@ -104,6 +113,7 @@ function loadState() {
       players: parsed.players.map((player, index) => ({
         name: String(player.name || `Player ${index + 1}`).slice(0, 24),
         scores: typeof player.scores === "object" && player.scores ? player.scores : {},
+        yahtzeeBonus: Number.isInteger(player.yahtzeeBonus) && player.yahtzeeBonus >= 0 ? player.yahtzeeBonus : 0,
       })),
       dice: normalizeDice(parsed.dice),
       held: normalizeHeld(parsed.held),
@@ -133,10 +143,46 @@ function getUniqueSortedDice(dice) {
   return [...new Set(dice)].sort((left, right) => left - right);
 }
 
-function scoreCategory(categoryKey, dice) {
+function getYahtzeeFace(dice) {
+  if (dice.length !== 5) {
+    return null;
+  }
+
+  return dice.every((value) => value === dice[0]) ? dice[0] : null;
+}
+
+function isBonusYahtzeeEligible(player, dice) {
+  return getYahtzeeFace(dice) !== null && player.scores.yahtzee === 50;
+}
+
+function getForcedUpperCategory(player, dice) {
+  if (!isBonusYahtzeeEligible(player, dice)) {
+    return null;
+  }
+
+  const upperKey = faceToUpperKey[getYahtzeeFace(dice)];
+  return upperKey in player.scores ? null : upperKey;
+}
+
+function isJokerActive(player, dice) {
+  return isBonusYahtzeeEligible(player, dice) && getForcedUpperCategory(player, dice) === null;
+}
+
+function getOpenCategories(player, dice) {
+  const openCategories = categories.filter((category) => !(category.key in player.scores));
+  const forcedUpperCategory = getForcedUpperCategory(player, dice);
+  if (!forcedUpperCategory) {
+    return openCategories;
+  }
+
+  return openCategories.filter((category) => category.key === forcedUpperCategory);
+}
+
+function scoreCategory(categoryKey, dice, player = null) {
   const counts = getCounts(dice);
   const values = Object.values(counts);
   const total = dice.reduce((sum, value) => sum + value, 0);
+  const jokerActive = player ? isJokerActive(player, dice) : false;
 
   switch (categoryKey) {
     case "ones":
@@ -156,14 +202,14 @@ function scoreCategory(categoryKey, dice) {
     case "fourKind":
       return values.some((count) => count >= 4) ? total : 0;
     case "fullHouse":
-      return values.includes(2) && values.includes(3) ? 25 : 0;
+      return jokerActive || (values.includes(2) && values.includes(3)) ? 25 : 0;
     case "smallStraight": {
       const unique = getUniqueSortedDice(dice).join("");
-      return ["1234", "2345", "3456"].some((sequence) => unique.includes(sequence)) ? 30 : 0;
+      return jokerActive || ["1234", "2345", "3456"].some((sequence) => unique.includes(sequence)) ? 30 : 0;
     }
     case "largeStraight": {
       const unique = getUniqueSortedDice(dice).join("");
-      return unique === "12345" || unique === "23456" ? 40 : 0;
+      return jokerActive || unique === "12345" || unique === "23456" ? 40 : 0;
     }
     case "yahtzee":
       return values.some((count) => count === 5) ? 50 : 0;
@@ -180,11 +226,13 @@ function getPlayerTotals(player) {
     .filter((category) => category.section === "lower")
     .reduce((sum, category) => sum + (player.scores[category.key] || 0), 0);
   const bonus = upperSubtotal >= 63 ? 35 : 0;
+  const yahtzeeBonusScore = (player.yahtzeeBonus || 0) * 100;
   return {
     upperSubtotal,
     lowerSubtotal,
     bonus,
-    grandTotal: upperSubtotal + lowerSubtotal + bonus,
+    yahtzeeBonusScore,
+    grandTotal: upperSubtotal + lowerSubtotal + bonus + yahtzeeBonusScore,
     filled: Object.keys(player.scores).length,
   };
 }
@@ -207,7 +255,7 @@ function getWinnerSummary() {
     return {
       isTie: true,
       title: "Photo finish",
-      copy: `Dead even at ${first.grandTotal}. Nobody blinked.`,
+      copy: `Dead even at ${first.grandTotal}. Split the snacks and play another.`,
       footer: `Tie game at ${first.grandTotal}.`,
     };
   }
@@ -218,10 +266,11 @@ function getWinnerSummary() {
   const winnerName = state.players[winnerIndex].name;
   const loserName = state.players[loserIndex].name;
   const winnerScore = winnerIndex === 0 ? first.grandTotal : second.grandTotal;
+  const bonusHits = state.players[winnerIndex].yahtzeeBonus || 0;
   return {
     isTie: false,
-    title: `${winnerName} wins`,
-    copy: `${winnerName} closes it out with ${winnerScore}. Margin: ${margin} over ${loserName}.`,
+    title: `${winnerName} takes the crown`,
+    copy: `${winnerName} posts ${winnerScore} and wins by ${margin} over ${loserName}.${bonusHits > 0 ? ` Bonus Yahtzees: ${bonusHits}.` : ""}`,
     footer: `${winnerName} takes the crown by ${margin} over ${loserName}.`,
   };
 }
@@ -231,11 +280,12 @@ function getWinnerText() {
 }
 
 function getAvailableScores() {
+  const currentPlayer = getCurrentPlayer();
   return categories
-    .filter((category) => !(category.key in getCurrentPlayer().scores))
+    .filter((category) => getOpenCategories(currentPlayer, state.dice).some((openCategory) => openCategory.key === category.key))
     .map((category) => ({
       ...category,
-      score: scoreCategory(category.key, state.dice),
+      score: scoreCategory(category.key, state.dice, currentPlayer),
     }))
     .sort((left, right) => right.score - left.score || left.label.localeCompare(right.label));
 }
@@ -247,6 +297,12 @@ function getHintText() {
 
   if (!state.turnStarted) {
     return "Roll to start the turn. Tap dice after the first roll to hold them.";
+  }
+
+  const forcedUpperCategory = getForcedUpperCategory(getCurrentPlayer(), state.dice);
+  if (forcedUpperCategory) {
+    const forcedLabel = categories.find((category) => category.key === forcedUpperCategory)?.label || forcedUpperCategory;
+    return `Bonus Yahtzee: rules force this roll into ${forcedLabel}.`;
   }
 
   const best = getAvailableScores().slice(0, 2);
@@ -278,12 +334,12 @@ function renderScoreCell(category, playerIndex) {
     return `<td class="score-cell"><span class="score-value">${player.scores[category.key]}</span></td>`;
   }
 
-  const canScore = playerIndex === state.currentPlayer && state.turnStarted && !isGameOver();
+  const canScore = playerIndex === state.currentPlayer && state.turnStarted && !isGameOver() && getOpenCategories(player, state.dice).some((openCategory) => openCategory.key === category.key);
   if (!canScore) {
     return '<td class="score-cell"><span class="score-open">Open</span></td>';
   }
 
-  const preview = scoreCategory(category.key, state.dice);
+  const preview = scoreCategory(category.key, state.dice, player);
   return `
     <td class="score-cell">
       <button class="score-button is-active" type="button" data-score-category="${category.key}">${preview}</button>
@@ -333,6 +389,11 @@ function renderScoreboard() {
       <td>${totals[1].lowerSubtotal}</td>
     </tr>
     <tr class="totals-row">
+      <td>Yahtzee bonus</td>
+      <td>${totals[0].yahtzeeBonusScore}</td>
+      <td>${totals[1].yahtzeeBonusScore}</td>
+    </tr>
+    <tr class="totals-row">
       <td>Grand total</td>
       <td>${totals[0].grandTotal}</td>
       <td>${totals[1].grandTotal}</td>
@@ -359,7 +420,11 @@ function renderStatus() {
   els.currentPlayerLabel.textContent = currentPlayer.name;
   els.roundLabel.textContent = `${Math.min(getRoundNumber(), 13)} / 13`;
   els.rollsLeftValue.textContent = String(state.rollsLeft);
-  els.bonusStatus.textContent = currentTotals.upperSubtotal >= 63 ? "Made" : `${Math.max(63 - currentTotals.upperSubtotal, 0)} to go`;
+  els.bonusStatus.textContent = currentTotals.yahtzeeBonusScore > 0
+    ? `${currentTotals.upperSubtotal >= 63 ? "Made" : `${Math.max(63 - currentTotals.upperSubtotal, 0)} to go`} • +${currentTotals.yahtzeeBonusScore}`
+    : currentTotals.upperSubtotal >= 63
+      ? "Made"
+      : `${Math.max(63 - currentTotals.upperSubtotal, 0)} to go`;
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver();
 
   if (isOfflineInstallBlocked) {
@@ -373,10 +438,14 @@ function renderStatus() {
   if (isGameOver()) {
     const winnerSummary = getWinnerSummary();
     els.winnerBanner.hidden = false;
+    els.winnerBanner.classList.toggle("is-tie", winnerSummary.isTie);
+    els.winnerConfetti.textContent = winnerSummary.isTie ? "✨ 🤝 ✨" : "🎉 🏆 🎉";
     els.winnerTitle.textContent = winnerSummary.title;
     els.winnerCopy.textContent = winnerSummary.copy;
   } else {
     els.winnerBanner.hidden = true;
+    els.winnerBanner.classList.remove("is-tie");
+    els.winnerConfetti.textContent = "🎉 ✨ 🎉";
     els.winnerTitle.textContent = "Winner";
     els.winnerCopy.textContent = "";
   }
@@ -435,11 +504,15 @@ function takeScore(categoryKey) {
   }
 
   const player = getCurrentPlayer();
-  if (categoryKey in player.scores) {
+  if (categoryKey in player.scores || !getOpenCategories(player, state.dice).some((category) => category.key === categoryKey)) {
     return;
   }
 
-  player.scores[categoryKey] = scoreCategory(categoryKey, state.dice);
+  if (isBonusYahtzeeEligible(player, state.dice)) {
+    player.yahtzeeBonus += 1;
+  }
+
+  player.scores[categoryKey] = scoreCategory(categoryKey, state.dice, player);
   advanceTurn();
   render();
 }

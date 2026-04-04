@@ -438,12 +438,14 @@ function renderStatus() {
   if (isGameOver()) {
     const winnerSummary = getWinnerSummary();
     els.winnerBanner.hidden = false;
+    els.winnerBanner.classList.add("is-live");
     els.winnerBanner.classList.toggle("is-tie", winnerSummary.isTie);
     els.winnerConfetti.textContent = winnerSummary.isTie ? "✨ 🤝 ✨" : "🎉 🏆 🎉";
     els.winnerTitle.textContent = winnerSummary.title;
     els.winnerCopy.textContent = winnerSummary.copy;
   } else {
     els.winnerBanner.hidden = true;
+    els.winnerBanner.classList.remove("is-live");
     els.winnerBanner.classList.remove("is-tie");
     els.winnerConfetti.textContent = "🎉 ✨ 🎉";
     els.winnerTitle.textContent = "Winner";
@@ -559,7 +561,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=4").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=5").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

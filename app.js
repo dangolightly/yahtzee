@@ -643,8 +643,6 @@ function renderStatus() {
   const isOnlineActiveTurn = online && session.phase === "active";
   const isMyTurn = isOnlineActiveTurn && session.playerIndex === state.currentPlayer;
   const isOpponentTurn = isOnlineActiveTurn && !isMyTurn;
-  const rollsTaken = state.turnStarted ? 3 - state.rollsLeft : 0;
-  const rollOrdinal = Math.min(3, rollsTaken + 1);
   const isDefaultCompleted = isDefaultWinActive();
   const isOnlineCompleted = isOnlineCompletedState();
   const playerOneLabel = online && !accepted ? session.profileName : state.players[0].name;
@@ -689,8 +687,8 @@ function renderStatus() {
   els.rollButton.textContent = (isGameOver() || isOnlineCompleted)
     ? "Game Over"
     : isOnlineActiveTurn
-    ? `${isMyTurn ? "Your" : "Their"} Roll (${rollOrdinal})`
-    : `Roll (${rollsLeft})`;
+    ? `${isMyTurn ? "Your" : "Their"} Roll (${rollsLeft} left)`
+    : `Roll (${rollsLeft} left)`;
 
   els.sessionBanner.hidden = true;
   els.sessionBanner.textContent = "";
@@ -1385,7 +1383,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=62").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=63").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

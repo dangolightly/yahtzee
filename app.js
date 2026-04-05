@@ -520,6 +520,14 @@ function renderLobby() {
 }
 
 function renderDice() {
+  const hideDiceForOpponent = isOnlineMode() && session.phase === "active" && session.playerIndex !== state.currentPlayer;
+  if (hideDiceForOpponent) {
+    els.diceGrid.hidden = true;
+    els.diceGrid.innerHTML = "";
+    return;
+  }
+
+  els.diceGrid.hidden = false;
   els.diceGrid.innerHTML = "";
   state.dice.forEach((value, index) => {
     const fragment = els.dieTemplate.content.cloneNode(true);
@@ -624,7 +632,6 @@ function renderScoreboard() {
 
 function renderStatus() {
   const totals = state.players.map(getPlayerTotals);
-  const ownedSeat = isOnlineMode() && session.phase === "active" ? session.playerIndex : null;
   const online = isOnlineMode();
   const accepted = hasAcceptedName();
   const isOnboardingFocus = online && !accepted;
@@ -633,9 +640,11 @@ function renderStatus() {
   const isActiveTurnMode = online && session.phase === "active";
   const nameReady = session.profileName.trim().length > 0;
   const rollsLeft = isGameOver() ? 0 : state.rollsLeft;
-  const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
-  const isMyTurn = isOnlineActiveTurn && ownedSeat === state.currentPlayer;
+  const isOnlineActiveTurn = online && session.phase === "active";
+  const isMyTurn = isOnlineActiveTurn && session.playerIndex === state.currentPlayer;
   const isOpponentTurn = isOnlineActiveTurn && !isMyTurn;
+  const rollsTaken = state.turnStarted ? 3 - state.rollsLeft : 0;
+  const rollOrdinal = Math.min(3, rollsTaken + 1);
   const isDefaultCompleted = isDefaultWinActive();
   const isOnlineCompleted = isOnlineCompletedState();
   const playerOneLabel = online && !accepted ? session.profileName : state.players[0].name;
@@ -649,8 +658,8 @@ function renderStatus() {
   els.playerTwoTotal.textContent = String(totals[1].grandTotal);
   els.playerOneChip.classList.toggle("is-active", isActiveTurnMode ? false : state.currentPlayer === 0);
   els.playerTwoChip.classList.toggle("is-active", isActiveTurnMode ? false : state.currentPlayer === 1);
-  els.playerOneChip.classList.toggle("is-owned", isActiveTurnMode ? false : ownedSeat === 0);
-  els.playerTwoChip.classList.toggle("is-owned", isActiveTurnMode ? false : ownedSeat === 1);
+  els.playerOneChip.classList.toggle("is-owned", false);
+  els.playerTwoChip.classList.toggle("is-owned", false);
   els.playerOneChip.classList.toggle("is-awaiting-name", online && (!accepted || session.phase === "waiting"));
   els.playerOneChip.classList.toggle("is-dimmed", false);
   els.playerTwoChip.classList.toggle("is-dimmed", false);
@@ -671,13 +680,16 @@ function renderStatus() {
   if (els.diceStrip) {
     els.diceStrip.classList.toggle("is-opponent-turn", isOpponentTurn);
   }
+  if (els.diceGrid) {
+    els.diceGrid.hidden = isOpponentTurn;
+  }
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
   els.rollButton.classList.toggle("is-your-turn", isMyTurn);
   els.rollButton.classList.toggle("is-their-turn", isOpponentTurn);
   els.rollButton.textContent = (isGameOver() || isOnlineCompleted)
     ? "Game Over"
     : isOnlineActiveTurn
-    ? `${isMyTurn ? "Your" : "Their"} Roll (${rollsLeft})`
+    ? `${isMyTurn ? "Your" : "Their"} Roll (${rollOrdinal})`
     : `Roll (${rollsLeft})`;
 
   els.sessionBanner.hidden = true;
@@ -1373,7 +1385,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=60").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=61").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

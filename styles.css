@@ -73,6 +73,22 @@ input {
   overflow: hidden;
 }
 
+.app-shell.is-onboarding-focus .lobby-panel,
+.app-shell.is-onboarding-focus .dice-strip,
+.app-shell.is-onboarding-focus .scoreboard-panel,
+.app-shell.is-onboarding-focus .install-warning,
+.app-shell.is-onboarding-focus .winner-banner,
+.app-shell.is-onboarding-focus #player-two-chip {
+  opacity: 0.3;
+  filter: grayscale(0.95);
+}
+
+.app-shell.is-onboarding-focus #player-one-chip,
+.app-shell.is-onboarding-focus #new-game-button {
+  opacity: 1;
+  filter: none;
+}
+
 .panel {
   background: var(--panel);
   border: 1px solid rgba(255, 255, 255, 0.1);
@@ -279,6 +295,12 @@ input {
   background: rgba(255, 255, 255, 0.24);
 }
 
+.player-chip.is-awaiting-name input::placeholder {
+  color: #0d3326;
+  font-weight: 900;
+  opacity: 1;
+}
+
 .player-chip.is-owned {
   border-color: rgba(255, 209, 102, 0.88);
   box-shadow: inset 0 0 0 1px rgba(255, 209, 102, 0.24), 0 0 0 2px rgba(255, 209, 102, 0.12);
@@ -377,6 +399,14 @@ input {
   animation: new-game-pulse 1.1s ease-in-out infinite alternate;
 }
 
+.secondary-button.is-onboarding-primary {
+  background: linear-gradient(180deg, #bff2b7, #8fdc8a 58%, #4ca86f);
+  color: #16395d;
+  border-color: rgba(191, 242, 183, 0.9);
+  box-shadow: 0 10px 22px rgba(76, 168, 111, 0.32);
+  font-weight: 800;
+}
+
 .primary-button:hover,
 .secondary-button:hover,
 .score-button:hover,
@@ -392,6 +422,11 @@ input {
   cursor: not-allowed;
   box-shadow: none;
   transform: none;
+}
+
+.secondary-button.is-onboarding-primary:disabled {
+  opacity: 0.85;
+  box-shadow: 0 10px 22px rgba(76, 168, 111, 0.2);
 }
 
 .dice-strip {

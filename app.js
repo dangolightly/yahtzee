@@ -552,10 +552,9 @@ function renderScoreCell(category, playerIndex, rowIndex) {
     return '<td class="score-cell"><span class="score-open">Open</span></td>';
   }
 
-  const preview = scoreCategory(category.key, state.dice, player);
   const staggerClass = rowIndex % 2 === 0 ? "stagger-right" : "stagger-left";
-  const buttonLabel = preview > 0 ? String(preview) : "Scratch";
-  const buttonClass = preview > 0 ? "score-button is-active" : "score-button is-scratch";
+  const buttonLabel = "Choose";
+  const buttonClass = "score-button is-active";
   return `
     <td class="score-cell ${staggerClass}">
       <button class="${buttonClass}" type="button" data-score-category="${category.key}">${buttonLabel}</button>

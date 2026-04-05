@@ -64,6 +64,7 @@ const els = {
   winnerConfetti: document.querySelector("#winner-confetti"),
   winnerTitle: document.querySelector("#winner-title"),
   winnerCopy: document.querySelector("#winner-copy"),
+  diceStrip: document.querySelector(".dice-strip"),
   diceGrid: document.querySelector("#dice-grid"),
   scoreboardBody: document.querySelector("#scoreboard-body"),
   scoreboardFooter: document.querySelector("#scoreboard-footer"),
@@ -634,6 +635,7 @@ function renderStatus() {
   const rollsLeft = isGameOver() ? 0 : state.rollsLeft;
   const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
   const isMyTurn = isOnlineActiveTurn && ownedSeat === state.currentPlayer;
+  const isOpponentTurn = isOnlineActiveTurn && !isMyTurn;
   const isDefaultCompleted = isDefaultWinActive();
   const isOnlineCompleted = isOnlineCompletedState();
   const playerOneLabel = online && !accepted ? session.profileName : state.players[0].name;
@@ -649,8 +651,6 @@ function renderStatus() {
   els.playerTwoChip.classList.toggle("is-active", isActiveTurnMode ? false : state.currentPlayer === 1);
   els.playerOneChip.classList.toggle("is-owned", isActiveTurnMode ? false : ownedSeat === 0);
   els.playerTwoChip.classList.toggle("is-owned", isActiveTurnMode ? false : ownedSeat === 1);
-  els.playerOneChip.classList.toggle("is-turn-ring", isActiveTurnMode && state.currentPlayer === 0);
-  els.playerTwoChip.classList.toggle("is-turn-ring", isActiveTurnMode && state.currentPlayer === 1);
   els.playerOneChip.classList.toggle("is-awaiting-name", online && (!accepted || session.phase === "waiting"));
   els.playerOneChip.classList.toggle("is-dimmed", false);
   els.playerTwoChip.classList.toggle("is-dimmed", false);
@@ -668,9 +668,12 @@ function renderStatus() {
   els.newGameButton.disabled = online ? (session.newGamePending || (!accepted && !nameReady)) : false;
   els.newGameButton.classList.toggle("is-onboarding-primary", isGuidedFocus);
   els.newGameButton.classList.toggle("is-new-game-ready", online && !accepted && nameReady && !session.newGamePending);
+  if (els.diceStrip) {
+    els.diceStrip.classList.toggle("is-opponent-turn", isOpponentTurn);
+  }
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
   els.rollButton.classList.toggle("is-your-turn", isMyTurn);
-  els.rollButton.classList.toggle("is-their-turn", isOnlineActiveTurn && !isMyTurn);
+  els.rollButton.classList.toggle("is-their-turn", isOpponentTurn);
   els.rollButton.textContent = (isGameOver() || isOnlineCompleted)
     ? "Game Over"
     : isOnlineActiveTurn
@@ -1370,7 +1373,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=59").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=60").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

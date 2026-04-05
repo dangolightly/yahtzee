@@ -343,11 +343,6 @@ input {
   box-shadow: inset 0 0 0 1px rgba(255, 209, 102, 0.24), 0 0 0 2px rgba(255, 209, 102, 0.12);
 }
 
-.player-chip.is-turn-ring {
-  border-color: rgba(191, 242, 183, 0.98);
-  box-shadow: inset 0 0 0 1px rgba(191, 242, 183, 0.62), 0 0 0 3px rgba(143, 220, 138, 0.28);
-}
-
 .player-chip.is-dimmed {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.08);
@@ -476,6 +471,21 @@ input {
   grid-template-columns: minmax(0, 1fr) 124px;
   gap: 4px;
   align-items: stretch;
+}
+
+.dice-strip.is-opponent-turn {
+  grid-template-columns: 1fr;
+}
+
+.dice-strip.is-opponent-turn .dice-grid {
+  display: none;
+}
+
+.dice-strip.is-opponent-turn .roll-button {
+  width: 100%;
+  min-height: 42px;
+  font-size: 0.86rem;
+  font-weight: 800;
 }
 
 .dice-grid {

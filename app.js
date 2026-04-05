@@ -629,6 +629,7 @@ function renderStatus() {
   const isOnboardingFocus = online && !accepted;
   const isWaitingFocus = online && accepted && session.phase === "waiting";
   const isGuidedFocus = isOnboardingFocus || isWaitingFocus;
+  const isActiveTurnMode = online && session.phase === "active";
   const nameReady = session.profileName.trim().length > 0;
   const rollsLeft = isGameOver() ? 0 : state.rollsLeft;
   const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
@@ -644,13 +645,15 @@ function renderStatus() {
   els.playerTwoHeading.textContent = `${state.players[1].name} (${totals[1].grandTotal})`;
   els.playerOneTotal.textContent = String(totals[0].grandTotal);
   els.playerTwoTotal.textContent = String(totals[1].grandTotal);
-  els.playerOneChip.classList.toggle("is-active", isOnlineActiveTurn ? (isMyTurn && ownedSeat === 0) : state.currentPlayer === 0);
-  els.playerTwoChip.classList.toggle("is-active", isOnlineActiveTurn ? (isMyTurn && ownedSeat === 1) : state.currentPlayer === 1);
-  els.playerOneChip.classList.toggle("is-owned", ownedSeat === 0);
-  els.playerTwoChip.classList.toggle("is-owned", ownedSeat === 1);
+  els.playerOneChip.classList.toggle("is-active", isActiveTurnMode ? false : state.currentPlayer === 0);
+  els.playerTwoChip.classList.toggle("is-active", isActiveTurnMode ? false : state.currentPlayer === 1);
+  els.playerOneChip.classList.toggle("is-owned", isActiveTurnMode ? false : ownedSeat === 0);
+  els.playerTwoChip.classList.toggle("is-owned", isActiveTurnMode ? false : ownedSeat === 1);
+  els.playerOneChip.classList.toggle("is-turn-ring", isActiveTurnMode && state.currentPlayer === 0);
+  els.playerTwoChip.classList.toggle("is-turn-ring", isActiveTurnMode && state.currentPlayer === 1);
   els.playerOneChip.classList.toggle("is-awaiting-name", online && (!accepted || session.phase === "waiting"));
-  els.playerOneChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
-  els.playerTwoChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
+  els.playerOneChip.classList.toggle("is-dimmed", false);
+  els.playerTwoChip.classList.toggle("is-dimmed", false);
 
   if (els.appShell) {
     els.appShell.classList.toggle("is-onboarding-focus", isOnboardingFocus);
@@ -1367,7 +1370,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=58").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=59").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

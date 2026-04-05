@@ -481,9 +481,7 @@ function renderLobby() {
   els.queueSection.hidden = !showingChallengerList;
 
   if (!accepted) {
-    els.lobbyCopy.textContent = session.notice || (session.reconnecting
-      ? "Trying to reconnect..."
-      : "Enter your name, then tap New Game.");
+    els.lobbyCopy.textContent = session.notice || (session.reconnecting ? "Trying to reconnect..." : "");
     els.lobbyCopy.hidden = !els.lobbyCopy.textContent;
     els.queueList.innerHTML = "";
     return;
@@ -1366,7 +1364,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=56").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=57").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

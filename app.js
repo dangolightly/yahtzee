@@ -627,6 +627,8 @@ function renderStatus() {
   const online = isOnlineMode();
   const accepted = hasAcceptedName();
   const isOnboardingFocus = online && !accepted;
+  const isWaitingFocus = online && accepted && session.phase === "waiting";
+  const isGuidedFocus = isOnboardingFocus || isWaitingFocus;
   const nameReady = session.profileName.trim().length > 0;
   const rollsLeft = isGameOver() ? 0 : state.rollsLeft;
   const isOnlineActiveTurn = online && session.phase === "active" && ownedSeat !== null;
@@ -646,12 +648,13 @@ function renderStatus() {
   els.playerTwoChip.classList.toggle("is-active", isOnlineActiveTurn ? (isMyTurn && ownedSeat === 1) : state.currentPlayer === 1);
   els.playerOneChip.classList.toggle("is-owned", ownedSeat === 0);
   els.playerTwoChip.classList.toggle("is-owned", ownedSeat === 1);
-  els.playerOneChip.classList.toggle("is-awaiting-name", online && !accepted);
+  els.playerOneChip.classList.toggle("is-awaiting-name", online && (!accepted || session.phase === "waiting"));
   els.playerOneChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
   els.playerTwoChip.classList.toggle("is-dimmed", isOnlineActiveTurn && !isMyTurn);
 
   if (els.appShell) {
     els.appShell.classList.toggle("is-onboarding-focus", isOnboardingFocus);
+    els.appShell.classList.toggle("is-waiting-focus", isWaitingFocus);
   }
 
   els.playerOneInput.placeholder = isOnboardingFocus ? "Enter name, hit New Game" : "";
@@ -660,7 +663,7 @@ function renderStatus() {
   els.playerTwoInput.disabled = online;
   els.newGameButton.textContent = session.newGamePending ? (session.newGamePendingLabel || "Working...") : (online ? "New Game" : "New");
   els.newGameButton.disabled = online ? (session.newGamePending || (!accepted && !nameReady)) : false;
-  els.newGameButton.classList.toggle("is-onboarding-primary", isOnboardingFocus);
+  els.newGameButton.classList.toggle("is-onboarding-primary", isGuidedFocus);
   els.newGameButton.classList.toggle("is-new-game-ready", online && !accepted && nameReady && !session.newGamePending);
   els.rollButton.disabled = state.rollsLeft === 0 || isGameOver() || !canCurrentClientAct();
   els.rollButton.classList.toggle("is-your-turn", isMyTurn);
@@ -1364,7 +1367,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=57").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=58").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

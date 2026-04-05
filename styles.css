@@ -80,7 +80,7 @@ input {
 .app-shell.is-onboarding-focus .winner-banner,
 .app-shell.is-onboarding-focus #player-two-chip {
   opacity: 0.3;
-  filter: grayscale(0.95);
+  filter: grayscale(0.95) blur(1px);
 }
 
 .app-shell.is-onboarding-focus #player-one-chip,
@@ -91,6 +91,38 @@ input {
 
 .app-shell.is-onboarding-focus .player-strip {
   grid-template-columns: 1.7fr 0.6fr 106px;
+}
+
+.app-shell.is-waiting-focus .dice-strip,
+.app-shell.is-waiting-focus .scoreboard-panel,
+.app-shell.is-waiting-focus .install-warning,
+.app-shell.is-waiting-focus .winner-banner,
+.app-shell.is-waiting-focus #player-two-chip {
+  opacity: 0.3;
+  filter: grayscale(0.95) blur(1px);
+}
+
+.app-shell.is-waiting-focus #player-one-chip,
+.app-shell.is-waiting-focus #new-game-button,
+.app-shell.is-waiting-focus .queue-card,
+.app-shell.is-waiting-focus .queue-empty {
+  opacity: 1;
+  filter: none;
+}
+
+.app-shell.is-waiting-focus .queue-card,
+.app-shell.is-waiting-focus .queue-empty {
+  background: linear-gradient(180deg, #bff2b7, #8fdc8a 58%, #4ca86f);
+  border-color: rgba(191, 242, 183, 0.9);
+  box-shadow: 0 10px 22px rgba(76, 168, 111, 0.26);
+  color: #16395d;
+}
+
+.app-shell.is-waiting-focus .queue-card strong,
+.app-shell.is-waiting-focus .queue-card span,
+.app-shell.is-waiting-focus .queue-empty {
+  color: #16395d;
+  font-weight: 700;
 }
 
 .panel {

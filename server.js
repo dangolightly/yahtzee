@@ -7,22 +7,26 @@ const SESSION_TIMEOUT_MS = 5 * 60 * 1000;
 const COMPLETED_GAME_TTL_MS = 10 * 60 * 1000;
 const DISCONNECT_GRACE_MS = 12 * 1000;
 const MAX_WAITING_GAMES = 10;
+const OPENAI_BASE_URL = String(process.env.CP_OPENAI_BASE_URL || "https://api.openai.com/v1").replace(/\/+$/, "");
+const OPENAI_API_KEY = String(process.env.CP_OPENAI_API_KEY || "").trim();
+const OPENAI_MODEL = String(process.env.CP_OPENAI_MODEL || "gpt-4o-mini").trim() || "gpt-4o-mini";
+const AI_TIMEOUT_MS = Math.max(1_000, Number(process.env.CP_AI_TIMEOUT_MS) || 20_000);
 const root = __dirname;
 
 const categories = [
-  { key: "ones", section: "upper" },
-  { key: "twos", section: "upper" },
-  { key: "threes", section: "upper" },
-  { key: "fours", section: "upper" },
-  { key: "fives", section: "upper" },
-  { key: "sixes", section: "upper" },
-  { key: "threeKind", section: "lower" },
-  { key: "fourKind", section: "lower" },
-  { key: "fullHouse", section: "lower" },
-  { key: "smallStraight", section: "lower" },
-  { key: "largeStraight", section: "lower" },
-  { key: "yahtzee", section: "lower" },
-  { key: "chance", section: "lower" },
+  { key: "ones", label: "Ones", section: "upper" },
+  { key: "twos", label: "Twos", section: "upper" },
+  { key: "threes", label: "Threes", section: "upper" },
+  { key: "fours", label: "Fours", section: "upper" },
+  { key: "fives", label: "Fives", section: "upper" },
+  { key: "sixes", label: "Sixes", section: "upper" },
+  { key: "threeKind", label: "3-kind", section: "lower" },
+  { key: "fourKind", label: "4-kind", section: "lower" },
+  { key: "fullHouse", label: "Full house", section: "lower" },
+  { key: "smallStraight", label: "Sm straight", section: "lower" },
+  { key: "largeStraight", label: "Lg straight", section: "lower" },
+  { key: "yahtzee", label: "Yahtzee", section: "lower" },
+  { key: "chance", label: "Chance", section: "lower" },
 ];
 
 const upperKeys = ["ones", "twos", "threes", "fours", "fives", "sixes"];
@@ -680,6 +684,102 @@ function parseJson(request) {
   });
 }
 
+function getCategoryLabel(categoryKey) {
+  return categories.find((category) => category.key === categoryKey)?.label || String(categoryKey || "score");
+}
+
+function normalizeFunLine(line) {
+  const cleaned = String(line || "")
+    .replace(/[\r\n\t]+/g, " ")
+    .replace(/\s+/g, " ")
+    .replace(/^["'`]+|["'`]+$/g, "")
+    .trim();
+  if (!cleaned) {
+    return "";
+  }
+
+  const words = cleaned.split(" ").filter(Boolean).slice(0, 6);
+  if (!words.length) {
+    return "";
+  }
+
+  const clipped = words.join(" ").replace(/[.!?]+$/, "");
+  return clipped ? `${clipped}.` : "";
+}
+
+function fallbackFunLine(points) {
+  if (points >= 40) {
+    return "Dice just hired your hype manager.";
+  }
+
+  if (points >= 25) {
+    return "That move scared the probability gods.";
+  }
+
+  if (points >= 12) {
+    return "Solid score, snack break earned soon.";
+  }
+
+  if (points > 0) {
+    return "Messy, but your comeback is brewing.";
+  }
+
+  return "Bold scratch, future-you says thank you.";
+}
+
+async function generateFunLine(categoryKey, points) {
+  const safePoints = Number.isFinite(points) ? Math.max(0, Math.floor(points)) : 0;
+  if (!OPENAI_API_KEY) {
+    return fallbackFunLine(safePoints);
+  }
+
+  const categoryLabel = getCategoryLabel(categoryKey);
+  const playSummary = `${safePoints} points in the ${categoryLabel} position`;
+  const userPrompt = `I am playing Yahtzee, I just played ${playSummary}, provide me one funny sentence, you are limited to 6 words, about that play, if it was a great play, then celebrate with humor, if it was a lame play, then something funny and encouraging.`;
+
+  const controller = new AbortController();
+  const timeoutHandle = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
+
+  try {
+    const response = await fetch(`${OPENAI_BASE_URL}/chat/completions`, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${OPENAI_API_KEY}`,
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({
+        model: OPENAI_MODEL,
+        temperature: 1,
+        max_tokens: 40,
+        messages: [
+          {
+            role: "system",
+            content: "Write one family-friendly funny Yahtzee reaction. Return exactly one sentence, 6 words maximum. No emojis. No quotes.",
+          },
+          {
+            role: "user",
+            content: userPrompt,
+          },
+        ],
+      }),
+      signal: controller.signal,
+    });
+
+    const payload = await response.json().catch(() => null);
+    if (!response.ok) {
+      throw new Error(payload?.error?.message || "AI request failed");
+    }
+
+    const candidate = payload?.choices?.[0]?.message?.content;
+    const normalized = normalizeFunLine(candidate);
+    return normalized || fallbackFunLine(safePoints);
+  } catch {
+    return fallbackFunLine(safePoints);
+  } finally {
+    clearTimeout(timeoutHandle);
+  }
+}
+
 async function handleApi(request, response, url) {
   if (request.method === "GET" && url.pathname === "/api/session") {
     const clientId = String(url.searchParams.get("clientId") || "");
@@ -824,6 +924,25 @@ async function handleApi(request, response, url) {
       }
 
       sendJson(response, 200, buildSnapshot(clientId));
+      return true;
+    } catch (error) {
+      sendJson(response, 400, { ok: false, error: error.message });
+      return true;
+    }
+  }
+
+  if (request.method === "POST" && url.pathname === "/api/fun-line") {
+    try {
+      const body = await parseJson(request);
+      const categoryKey = String(body.categoryKey || "");
+      const points = Number(body.points);
+      if (!categoryKey || !Number.isFinite(points)) {
+        sendJson(response, 400, { ok: false, error: "Missing play payload" });
+        return true;
+      }
+
+      const line = await generateFunLine(categoryKey, points);
+      sendJson(response, 200, { ok: true, line });
       return true;
     } catch (error) {
       sendJson(response, 400, { ok: false, error: error.message });

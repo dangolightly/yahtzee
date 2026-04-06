@@ -4,9 +4,11 @@
   "description": "Offline pass-and-play Yahtzee for one shared phone.",
   "start_url": "/yahtzee/",
   "scope": "/yahtzee/",
-  "display": "standalone",
-  "background_color": "#efe4cd",
-  "theme_color": "#1f6b52",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "portrait",
+  "background_color": "#09061b",
+  "theme_color": "#09061b",
   "icons": [
     {
       "src": "icon.svg",

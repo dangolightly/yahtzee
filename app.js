@@ -762,6 +762,21 @@ function getScoreFunConfig(categoryKey) {
   return { enabled: false, choices: [] };
 }
 
+function getConfigFunLine(categoryKey) {
+  const scoreConfig = getScoreFunConfig(categoryKey);
+  if (!scoreConfig.enabled) {
+    return "";
+  }
+
+  const choices = scoreConfig.choices.filter((choice) => isConfigEnabled(choice?.enabled, true));
+  if (!choices.length) {
+    return "";
+  }
+
+  const choice = choices[Math.floor(Math.random() * choices.length)];
+  return String(choice?.text || "").trim();
+}
+
 function clearFunFlash() {
   if (funFlashHandle) {
     window.clearTimeout(funFlashHandle);
@@ -776,7 +791,15 @@ function clearFunFlash() {
   els.funFlash.className = "fun-flash";
 }
 
-function triggerFunMoment(categoryKey) {
+async function requestAiFunLine(categoryKey, points) {
+  const payload = await fetchJson("/api/fun-line", {
+    method: "POST",
+    body: JSON.stringify({ categoryKey, points }),
+  });
+  return String(payload?.line || "").trim();
+}
+
+async function triggerFunMoment(categoryKey, points) {
   if (!funMode.config || !els.funFlash || !isConfigEnabled(funMode.config?.enabled, true)) {
     return;
   }
@@ -786,13 +809,17 @@ function triggerFunMoment(categoryKey) {
     return;
   }
 
-  const choices = scoreConfig.choices.filter((choice) => isConfigEnabled(choice?.enabled, true));
-  if (!choices.length) {
-    return;
+  let line = "";
+  try {
+    line = await requestAiFunLine(categoryKey, points);
+  } catch {
+    line = "";
   }
 
-  const choice = choices[Math.floor(Math.random() * choices.length)];
-  const line = String(choice?.text || "").trim();
+  if (!line) {
+    line = getConfigFunLine(categoryKey);
+  }
+
   if (!line) {
     return;
   }
@@ -1000,8 +1027,9 @@ function takeScoreLocal(categoryKey) {
     player.yahtzeeBonus += 1;
   }
 
-  triggerFunMoment(categoryKey);
-  player.scores[categoryKey] = scoreCategory(categoryKey, state.dice, player);
+  const pointsScored = scoreCategory(categoryKey, state.dice, player);
+  triggerFunMoment(categoryKey, pointsScored);
+  player.scores[categoryKey] = pointsScored;
   advanceTurnLocal();
   render();
 }
@@ -1346,9 +1374,10 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
   if (isOnlineMode()) {
     const categoryKey = button.dataset.scoreCategory;
+    const pointsScored = scoreCategory(categoryKey, state.dice, getCurrentPlayer());
     submitOnlineAction("takeScore", { categoryKey }, {
       onSuccess: () => {
-        triggerFunMoment(categoryKey);
+        triggerFunMoment(categoryKey, pointsScored);
       },
     });
     return;
@@ -1383,7 +1412,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=63").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=64").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

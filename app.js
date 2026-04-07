@@ -796,7 +796,10 @@ async function requestAiFunLine(categoryKey, points) {
     method: "POST",
     body: JSON.stringify({ categoryKey, points }),
   });
-  return String(payload?.line || "").trim();
+  return {
+    line: String(payload?.line || "").trim(),
+    source: payload?.source === "ai" ? "ai" : "fallback",
+  };
 }
 
 async function triggerFunMoment(categoryKey, points) {
@@ -810,14 +813,19 @@ async function triggerFunMoment(categoryKey, points) {
   }
 
   let line = "";
+  let isFreshAiLine = false;
   try {
-    line = await requestAiFunLine(categoryKey, points);
+    const aiResult = await requestAiFunLine(categoryKey, points);
+    line = aiResult.line;
+    isFreshAiLine = aiResult.source === "ai" && Boolean(aiResult.line);
   } catch {
     line = "";
+    isFreshAiLine = false;
   }
 
   if (!line) {
     line = getConfigFunLine(categoryKey);
+    isFreshAiLine = false;
   }
 
   if (!line) {
@@ -829,7 +837,7 @@ async function triggerFunMoment(categoryKey, points) {
   }
 
   els.funFlash.hidden = false;
-  els.funFlash.className = "fun-flash is-visible";
+  els.funFlash.className = isFreshAiLine ? "fun-flash is-visible is-ai-fresh" : "fun-flash is-visible";
 
   if (funFlashHandle) {
     window.clearTimeout(funFlashHandle);

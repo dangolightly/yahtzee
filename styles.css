@@ -598,6 +598,14 @@ input {
   transition: transform 180ms ease, opacity 180ms ease;
 }
 
+.fun-flash.is-ai-fresh {
+  border-color: rgba(123, 98, 0, 0.6);
+  background:
+    radial-gradient(circle at 35% 30%, rgba(255, 249, 191, 0.95), transparent 48%),
+    conic-gradient(from 28deg, #ffe066, #ffd43b, #fff3bf, #fcc419, #ffe066, #fab005, #fff9db, #ffd43b, #ffe066);
+  box-shadow: 0 0 0 2px rgba(255, 224, 89, 0.45), 0 22px 34px rgba(0, 0, 0, 0.34);
+}
+
 .fun-flash.is-visible {
   opacity: 1;
   transform: translate(-50%, -50%) rotate(45deg) scale(1);

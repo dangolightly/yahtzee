@@ -729,8 +729,9 @@ function fallbackFunLine(points) {
 
 async function generateFunLine(categoryKey, points) {
   const safePoints = Number.isFinite(points) ? Math.max(0, Math.floor(points)) : 0;
+  const fallbackLine = fallbackFunLine(safePoints);
   if (!OPENAI_API_KEY) {
-    return fallbackFunLine(safePoints);
+    return { line: fallbackLine, source: "fallback" };
   }
 
   const categoryLabel = getCategoryLabel(categoryKey);
@@ -772,9 +773,13 @@ async function generateFunLine(categoryKey, points) {
 
     const candidate = payload?.choices?.[0]?.message?.content;
     const normalized = normalizeFunLine(candidate);
-    return normalized || fallbackFunLine(safePoints);
+    if (normalized) {
+      return { line: normalized, source: "ai" };
+    }
+
+    return { line: fallbackLine, source: "fallback" };
   } catch {
-    return fallbackFunLine(safePoints);
+    return { line: fallbackLine, source: "fallback" };
   } finally {
     clearTimeout(timeoutHandle);
   }
@@ -941,8 +946,8 @@ async function handleApi(request, response, url) {
         return true;
       }
 
-      const line = await generateFunLine(categoryKey, points);
-      sendJson(response, 200, { ok: true, line });
+      const funLine = await generateFunLine(categoryKey, points);
+      sendJson(response, 200, { ok: true, line: funLine.line, source: funLine.source });
       return true;
     } catch (error) {
       sendJson(response, 400, { ok: false, error: error.message });

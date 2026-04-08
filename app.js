@@ -254,6 +254,14 @@ let highlightedTutorialTarget = null;
 let funFlashHandle = null;
 let funConfigRefreshHandle = null;
 
+function triggerFunMomentAsync(categoryKey, points) {
+  window.setTimeout(() => {
+    triggerFunMoment(categoryKey, points).catch(() => {
+      // Presentation-only callback; ignore failures.
+    });
+  }, 0);
+}
+
 function getCounts(dice) {
   return dice.reduce((counts, value) => {
     counts[value] = (counts[value] || 0) + 1;
@@ -1036,10 +1044,10 @@ function takeScoreLocal(categoryKey) {
   }
 
   const pointsScored = scoreCategory(categoryKey, state.dice, player);
-  triggerFunMoment(categoryKey, pointsScored);
   player.scores[categoryKey] = pointsScored;
   advanceTurnLocal();
   render();
+  triggerFunMomentAsync(categoryKey, pointsScored);
 }
 
 function updatePlayerNameLocal(playerIndex, value) {
@@ -1385,7 +1393,7 @@ els.scoreboardBody.addEventListener("click", (event) => {
     const pointsScored = scoreCategory(categoryKey, state.dice, getCurrentPlayer());
     submitOnlineAction("takeScore", { categoryKey }, {
       onSuccess: () => {
-        triggerFunMoment(categoryKey, pointsScored);
+        triggerFunMomentAsync(categoryKey, pointsScored);
       },
     });
     return;

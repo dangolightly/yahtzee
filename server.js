@@ -741,7 +741,7 @@ function normalizeFunLine(line) {
     return "";
   }
 
-  const words = cleaned.split(" ").filter(Boolean).slice(0, 6);
+  const words = cleaned.split(" ").filter(Boolean).slice(0, 7);
   if (!words.length) {
     return "";
   }
@@ -779,7 +779,7 @@ async function generateFunLine(categoryKey, points) {
 
   const categoryLabel = getCategoryLabel(categoryKey);
   const playSummary = `${safePoints} points in the ${categoryLabel} position`;
-  const userPrompt = `I am playing Yahtzee, I just played ${playSummary}, provide me one funny sentence, you are limited to 6 words, about that play, if it was a great play, then celebrate with humor, if it was a lame play, then something funny and encouraging.`;
+  const userPrompt = `I am playing Yahtzee, I just played ${playSummary}, provide me one funny sentence, you are limited to 7 words, about that play, if it was a great play, then celebrate with humor, if it was a lame play, then something funny and encouraging.`;
 
   const controller = new AbortController();
   const timeoutHandle = setTimeout(() => controller.abort(), AI_TIMEOUT_MS);
@@ -798,7 +798,7 @@ async function generateFunLine(categoryKey, points) {
         messages: [
           {
             role: "system",
-            content: "Write one family-friendly funny Yahtzee reaction. Return exactly one sentence, 6 words maximum. No emojis. No quotes.",
+            content: "Write one family-friendly funny Yahtzee reaction. Return exactly one sentence, 7 words maximum. No emojis. No quotes.",
           },
           {
             role: "user",

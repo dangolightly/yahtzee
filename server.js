@@ -2,6 +2,49 @@ const http = require("http");
 const fs = require("fs");
 const path = require("path");
 
+function loadEnvDefaults(filePath) {
+  let content = "";
+  try {
+    content = fs.readFileSync(filePath, "utf8");
+  } catch {
+    return;
+  }
+
+  const lines = content.split(/\r?\n/);
+  for (const rawLine of lines) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) {
+      continue;
+    }
+
+    const separatorIndex = line.indexOf("=");
+    if (separatorIndex <= 0) {
+      continue;
+    }
+
+    const key = line.slice(0, separatorIndex).trim();
+    if (!/^[A-Za-z_][A-Za-z0-9_]*$/.test(key)) {
+      continue;
+    }
+
+    let value = line.slice(separatorIndex + 1).trim();
+    if (
+      (value.startsWith("\"") && value.endsWith("\""))
+      || (value.startsWith("'") && value.endsWith("'"))
+    ) {
+      value = value.slice(1, -1);
+    }
+
+    if (!(key in process.env) || String(process.env[key]).trim() === "") {
+      process.env[key] = value;
+    }
+  }
+}
+
+loadEnvDefaults(path.join(__dirname, "ai-runtime.defaults.env"));
+loadEnvDefaults(path.join(__dirname, "ai-runtime.env"));
+loadEnvDefaults(path.join(__dirname, "ai-runtime.local.env"));
+
 const DEFAULT_PORT = Number(process.env.PORT || 4173);
 const SESSION_TIMEOUT_MS = 5 * 60 * 1000;
 const COMPLETED_GAME_TTL_MS = 10 * 60 * 1000;

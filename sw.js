@@ -1,9 +1,9 @@
-const CACHE_NAME = "yahtzee-cabin-v64";
+const CACHE_NAME = "yahtzee-cabin-v65";
 const APP_ASSETS = [
   "./",
   "./index.html",
-  "./styles.css?v=62",
-  "./app.js?v=66",
+  "./styles.css?v=63",
+  "./app.js?v=67",
   "./yahtzee-fun-config.json",
   "./manifest.webmanifest",
   "./icon.svg",

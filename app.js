@@ -3,6 +3,7 @@ const CLIENT_ID_KEY = "yahtzee-client-id-v2";
 const PROFILE_NAME_KEY = "yahtzee-profile-name-v1";
 const CHALLENGER_LIST_OPEN_KEY = "yahtzee-challenger-open-v1";
 const TUTORIAL_DONE_KEY = "yahtzee-tutorial-done-v1";
+const FUN_MESSAGES_ENABLED_KEY = "yahtzee-fun-messages-enabled-v1";
 const FUN_CONFIG_URL = "./yahtzee-fun-config.json";
 const SESSION_POLL_MS = 4000;
 const FUN_CONFIG_REFRESH_MS = 10_000;
@@ -246,6 +247,7 @@ const tutorial = {
 
 const funMode = {
   config: null,
+  enabled: readLocalValue(FUN_MESSAGES_ENABLED_KEY) !== "0",
 };
 
 let completedResetHandle = null;
@@ -253,6 +255,7 @@ let completedResetPending = false;
 let highlightedTutorialTarget = null;
 let funFlashHandle = null;
 let funConfigRefreshHandle = null;
+let lastFunToggleAt = 0;
 
 function triggerFunMomentAsync(categoryKey, points) {
   window.setTimeout(() => {
@@ -799,6 +802,46 @@ function clearFunFlash() {
   els.funFlash.className = "fun-flash";
 }
 
+function showFunToggleHint(text, autoHideMs = 0) {
+  if (!els.funFlash || !els.funFlashText) {
+    return;
+  }
+
+  if (funFlashHandle) {
+    window.clearTimeout(funFlashHandle);
+    funFlashHandle = null;
+  }
+
+  els.funFlashText.textContent = String(text || "").trim();
+  els.funFlash.hidden = false;
+  els.funFlash.className = "fun-flash is-visible is-toggle-hint";
+
+  if (autoHideMs > 0) {
+    funFlashHandle = window.setTimeout(() => {
+      clearFunFlash();
+    }, autoHideMs);
+  }
+}
+
+function setFunMessagesEnabled(enabled, options = {}) {
+  const nextEnabled = Boolean(enabled);
+  const showConfirmation = options.showConfirmation !== false;
+  funMode.enabled = nextEnabled;
+  writeLocalValue(FUN_MESSAGES_ENABLED_KEY, nextEnabled ? "1" : "0");
+
+  if (!nextEnabled) {
+    showFunToggleHint("Fun lines off. Tap to turn on.");
+    return;
+  }
+
+  if (showConfirmation) {
+    showFunToggleHint("Fun lines on.", 1400);
+    return;
+  }
+
+  clearFunFlash();
+}
+
 async function requestAiFunLine(categoryKey, points) {
   const payload = await fetchJson("/api/fun-line", {
     method: "POST",
@@ -811,7 +854,7 @@ async function requestAiFunLine(categoryKey, points) {
 }
 
 async function triggerFunMoment(categoryKey, points) {
-  if (!funMode.config || !els.funFlash || !isConfigEnabled(funMode.config?.enabled, true)) {
+  if (!funMode.enabled || !funMode.config || !els.funFlash || !isConfigEnabled(funMode.config?.enabled, true)) {
     return;
   }
 
@@ -875,8 +918,14 @@ async function loadFunConfig() {
     };
   }
 
-  if (!isConfigEnabled(funMode.config?.enabled, true)) {
+  const isFunGloballyEnabled = isConfigEnabled(funMode.config?.enabled, true);
+  if (!isFunGloballyEnabled) {
     clearFunFlash();
+    return;
+  }
+
+  if (!funMode.enabled) {
+    showFunToggleHint("Fun lines off. Tap to turn on.");
   }
 }
 
@@ -1401,6 +1450,31 @@ els.scoreboardBody.addEventListener("click", (event) => {
 
   takeScoreLocal(button.dataset.scoreCategory);
 });
+
+function handleFunFlashToggleGesture(event) {
+  if (!els.funFlash || els.funFlash.hidden || !els.funFlash.classList.contains("is-visible")) {
+    return;
+  }
+
+  if (!funMode.config || !isConfigEnabled(funMode.config?.enabled, true)) {
+    return;
+  }
+
+  const now = Date.now();
+  if (now - lastFunToggleAt < 250) {
+    return;
+  }
+  lastFunToggleAt = now;
+
+  event.preventDefault();
+  event.stopPropagation();
+  setFunMessagesEnabled(!funMode.enabled);
+}
+
+if (els.funFlash) {
+  els.funFlash.addEventListener("pointerup", handleFunFlashToggleGesture);
+  els.funFlash.addEventListener("click", handleFunFlashToggleGesture);
+}
 
 els.tutorialNext.addEventListener("click", (event) => {
   event.preventDefault();

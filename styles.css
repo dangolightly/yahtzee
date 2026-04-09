@@ -609,6 +609,35 @@ input {
 .fun-flash.is-visible {
   opacity: 1;
   transform: translate(-50%, -50%) rotate(45deg) scale(1);
+  pointer-events: auto;
+  cursor: pointer;
+  touch-action: manipulation;
+}
+
+.fun-flash.is-toggle-hint {
+  top: auto;
+  bottom: 14px;
+  width: auto;
+  max-width: calc(100vw - 20px);
+  min-height: 0;
+  padding: 8px 14px;
+  clip-path: none;
+  border-radius: 999px;
+  border-color: rgba(191, 242, 183, 0.72);
+  background: linear-gradient(180deg, rgba(35, 44, 60, 0.97), rgba(14, 20, 30, 0.97));
+  color: #f7fbff;
+  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
+  transform: translate(-50%, 0) scale(0.97);
+}
+
+.fun-flash.is-toggle-hint.is-visible {
+  transform: translate(-50%, 0) scale(1);
+}
+
+.fun-flash.is-toggle-hint .fun-flash-text {
+  font-size: 0.76rem;
+  line-height: 1.2;
+  white-space: nowrap;
 }
 
 .fun-flash-text {

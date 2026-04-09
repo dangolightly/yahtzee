@@ -609,35 +609,6 @@ input {
 .fun-flash.is-visible {
   opacity: 1;
   transform: translate(-50%, -50%) rotate(45deg) scale(1);
-  pointer-events: auto;
-  cursor: pointer;
-  touch-action: manipulation;
-}
-
-.fun-flash.is-toggle-hint {
-  top: auto;
-  bottom: 14px;
-  width: auto;
-  max-width: calc(100vw - 20px);
-  min-height: 0;
-  padding: 8px 14px;
-  clip-path: none;
-  border-radius: 999px;
-  border-color: rgba(191, 242, 183, 0.72);
-  background: linear-gradient(180deg, rgba(35, 44, 60, 0.97), rgba(14, 20, 30, 0.97));
-  color: #f7fbff;
-  box-shadow: 0 10px 22px rgba(0, 0, 0, 0.35);
-  transform: translate(-50%, 0) scale(0.97);
-}
-
-.fun-flash.is-toggle-hint.is-visible {
-  transform: translate(-50%, 0) scale(1);
-}
-
-.fun-flash.is-toggle-hint .fun-flash-text {
-  font-size: 0.76rem;
-  line-height: 1.2;
-  white-space: nowrap;
 }
 
 .fun-flash-text {
@@ -646,6 +617,70 @@ input {
   font-weight: 700;
   line-height: 1.24;
   text-align: center;
+}
+
+.fun-toggle {
+  position: fixed;
+  right: calc(env(safe-area-inset-right, 0px) + 8px);
+  bottom: calc(env(safe-area-inset-bottom, 0px) + 8px);
+  z-index: 56;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  min-height: 32px;
+  padding: 6px 8px 6px 10px;
+  border-radius: 999px;
+  border: 1px solid rgba(191, 242, 183, 0.52);
+  background: rgba(11, 16, 26, 0.86);
+  color: #f7fbff;
+  font-size: 0.67rem;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  backdrop-filter: blur(6px);
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.3);
+}
+
+.fun-toggle.is-off {
+  border-color: rgba(255, 179, 97, 0.55);
+}
+
+.fun-toggle:focus-visible {
+  outline: 2px solid rgba(191, 242, 183, 0.9);
+  outline-offset: 2px;
+}
+
+.fun-toggle-label {
+  line-height: 1;
+}
+
+.fun-toggle-switch {
+  position: relative;
+  width: 33px;
+  height: 19px;
+  border-radius: 999px;
+  background: rgba(255, 175, 93, 0.46);
+  transition: background-color 140ms ease;
+}
+
+.fun-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: #ffd4a3;
+  transition: transform 140ms ease, background-color 140ms ease;
+}
+
+.fun-toggle.is-on .fun-toggle-switch {
+  background: rgba(191, 242, 183, 0.62);
+}
+
+.fun-toggle.is-on .fun-toggle-thumb {
+  transform: translateX(14px);
+  background: #e9ffe5;
 }
 
 .roll-button.is-their-turn:disabled {

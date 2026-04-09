@@ -52,6 +52,7 @@ const els = {
   queueList: document.querySelector("#queue-list"),
   funFlash: document.querySelector("#fun-flash"),
   funFlashText: document.querySelector("#fun-flash-text"),
+  funToggle: document.querySelector("#fun-toggle"),
   tutorialOverlay: document.querySelector("#tutorial-overlay"),
   tutorialBubble: document.querySelector("#tutorial-bubble"),
   tutorialStep: document.querySelector("#tutorial-step"),
@@ -255,7 +256,6 @@ let completedResetPending = false;
 let highlightedTutorialTarget = null;
 let funFlashHandle = null;
 let funConfigRefreshHandle = null;
-let lastFunToggleAt = 0;
 
 function triggerFunMomentAsync(categoryKey, points) {
   window.setTimeout(() => {
@@ -802,44 +802,35 @@ function clearFunFlash() {
   els.funFlash.className = "fun-flash";
 }
 
-function showFunToggleHint(text, autoHideMs = 0) {
-  if (!els.funFlash || !els.funFlashText) {
+function renderFunToggle() {
+  if (!els.funToggle) {
     return;
   }
 
-  if (funFlashHandle) {
-    window.clearTimeout(funFlashHandle);
-    funFlashHandle = null;
+  const isFunGloballyEnabled = Boolean(funMode.config) && isConfigEnabled(funMode.config?.enabled, true);
+  if (!isFunGloballyEnabled) {
+    els.funToggle.hidden = true;
+    return;
   }
 
-  els.funFlashText.textContent = String(text || "").trim();
-  els.funFlash.hidden = false;
-  els.funFlash.className = "fun-flash is-visible is-toggle-hint";
-
-  if (autoHideMs > 0) {
-    funFlashHandle = window.setTimeout(() => {
-      clearFunFlash();
-    }, autoHideMs);
-  }
+  const isOn = funMode.enabled;
+  els.funToggle.hidden = false;
+  els.funToggle.classList.toggle("is-on", isOn);
+  els.funToggle.classList.toggle("is-off", !isOn);
+  els.funToggle.setAttribute("aria-pressed", isOn ? "true" : "false");
+  els.funToggle.title = isOn ? "Fun lines on. Tap to turn off." : "Fun lines off. Tap to turn on.";
 }
 
 function setFunMessagesEnabled(enabled, options = {}) {
   const nextEnabled = Boolean(enabled);
-  const showConfirmation = options.showConfirmation !== false;
+  const clearFlash = options.clearFlash !== false;
   funMode.enabled = nextEnabled;
   writeLocalValue(FUN_MESSAGES_ENABLED_KEY, nextEnabled ? "1" : "0");
 
-  if (!nextEnabled) {
-    showFunToggleHint("Fun lines off. Tap to turn on.");
-    return;
+  if (!nextEnabled && clearFlash) {
+    clearFunFlash();
   }
-
-  if (showConfirmation) {
-    showFunToggleHint("Fun lines on.", 1400);
-    return;
-  }
-
-  clearFunFlash();
+  renderFunToggle();
 }
 
 async function requestAiFunLine(categoryKey, points) {
@@ -921,12 +912,14 @@ async function loadFunConfig() {
   const isFunGloballyEnabled = isConfigEnabled(funMode.config?.enabled, true);
   if (!isFunGloballyEnabled) {
     clearFunFlash();
+    renderFunToggle();
     return;
   }
 
   if (!funMode.enabled) {
-    showFunToggleHint("Fun lines off. Tap to turn on.");
+    clearFunFlash();
   }
+  renderFunToggle();
 }
 
 function startFunConfigRefresh() {
@@ -1451,29 +1444,14 @@ els.scoreboardBody.addEventListener("click", (event) => {
   takeScoreLocal(button.dataset.scoreCategory);
 });
 
-function handleFunFlashToggleGesture(event) {
-  if (!els.funFlash || els.funFlash.hidden || !els.funFlash.classList.contains("is-visible")) {
-    return;
-  }
-
-  if (!funMode.config || !isConfigEnabled(funMode.config?.enabled, true)) {
-    return;
-  }
-
-  const now = Date.now();
-  if (now - lastFunToggleAt < 250) {
-    return;
-  }
-  lastFunToggleAt = now;
-
-  event.preventDefault();
-  event.stopPropagation();
-  setFunMessagesEnabled(!funMode.enabled);
-}
-
-if (els.funFlash) {
-  els.funFlash.addEventListener("pointerup", handleFunFlashToggleGesture);
-  els.funFlash.addEventListener("click", handleFunFlashToggleGesture);
+if (els.funToggle) {
+  els.funToggle.addEventListener("click", (event) => {
+    event.preventDefault();
+    if (!funMode.config || !isConfigEnabled(funMode.config?.enabled, true)) {
+      return;
+    }
+    setFunMessagesEnabled(!funMode.enabled);
+  });
 }
 
 els.tutorialNext.addEventListener("click", (event) => {
@@ -1502,7 +1480,7 @@ window.addEventListener("resize", () => {
 
 if ("serviceWorker" in navigator) {
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register("./sw.js?v=65").then((registration) => {
+    navigator.serviceWorker.register("./sw.js?v=66").then((registration) => {
       registration.update();
     }).catch(() => {
       // Service worker registration failure does not block gameplay.

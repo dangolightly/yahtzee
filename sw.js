@@ -4,7 +4,6 @@ const APP_ASSETS = [
   "./index.html",
   "./styles.css?v=63",
   "./app.js?v=67",
-  "./yahtzee-fun-config.json",
   "./manifest.webmanifest",
   "./icon.svg",
 ];

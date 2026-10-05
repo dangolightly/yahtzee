@@ -82,28 +82,6 @@ If the host supports standard Node apps, it only needs to:
 
 The server already respects the `PORT` environment variable, so standard platform routing will work.
 
-## AI fun-line setup (optional)
-
-Default AI runtime values are tracked in `ai-runtime.defaults.env` and loaded by `server.js` on startup:
-
-```bash
-CP_OPENAI_MODEL=gpt-4o-mini
-CP_OPENAI_BASE_URL=https://api.openai.com/v1
-CP_AI_TIMEOUT_MS=20000
-```
-
-For local development, set your key in either `ai-runtime.env` or `ai-runtime.local.env` (both ignored by git):
-
-```bash
-CP_OPENAI_API_KEY=your_key_here
-```
-
-For deployed environments, set `CP_OPENAI_API_KEY` in your host dashboard.
-
-Any explicitly set environment variable overrides values loaded from `ai-runtime.defaults.env`, `ai-runtime.env`, and `ai-runtime.local.env`.
-
-When enabled, each scoring click requests one short funny line from OpenAI. If the API is unavailable, the app falls back to local phrases from `yahtzee-fun-config.json`.
-
 ## Try it on an iPhone
 
 To test the installed PWA on iPhone, the app needs to be served over HTTPS. Static hosts such as GitHub Pages support the offline single-device mode only, because they cannot run the multiplayer session API. For true two-device online play on the road, deploy this repo to a Node-capable host and then:

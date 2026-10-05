@@ -3,10 +3,7 @@ const CLIENT_ID_KEY = "yahtzee-client-id-v2";
 const PROFILE_NAME_KEY = "yahtzee-profile-name-v1";
 const CHALLENGER_LIST_OPEN_KEY = "yahtzee-challenger-open-v1";
 const TUTORIAL_DONE_KEY = "yahtzee-tutorial-done-v1";
-const FUN_MESSAGES_ENABLED_KEY = "yahtzee-fun-messages-enabled-v1";
-const FUN_CONFIG_URL = "./yahtzee-fun-config.json";
 const SESSION_POLL_MS = 4000;
-const FUN_CONFIG_REFRESH_MS = 10_000;
 
 const categories = [
   { key: "ones", label: "Ones", section: "upper" },
@@ -50,9 +47,6 @@ const els = {
   lobbyCopy: document.querySelector("#lobby-copy"),
   queueSection: document.querySelector("#queue-section"),
   queueList: document.querySelector("#queue-list"),
-  funFlash: document.querySelector("#fun-flash"),
-  funFlashText: document.querySelector("#fun-flash-text"),
-  funToggle: document.querySelector("#fun-toggle"),
   tutorialOverlay: document.querySelector("#tutorial-overlay"),
   tutorialBubble: document.querySelector("#tutorial-bubble"),
   tutorialStep: document.querySelector("#tutorial-step"),
@@ -246,24 +240,9 @@ const tutorial = {
   stepIndex: 0,
 };
 
-const funMode = {
-  config: null,
-  enabled: readLocalValue(FUN_MESSAGES_ENABLED_KEY) !== "0",
-};
-
 let completedResetHandle = null;
 let completedResetPending = false;
 let highlightedTutorialTarget = null;
-let funFlashHandle = null;
-let funConfigRefreshHandle = null;
-
-function triggerFunMomentAsync(categoryKey, points) {
-  window.setTimeout(() => {
-    triggerFunMoment(categoryKey, points).catch(() => {
-      // Presentation-only callback; ignore failures.
-    });
-  }, 0);
-}
 
 function getCounts(dice) {
   return dice.reduce((counts, value) => {
@@ -740,197 +719,7 @@ function renderStatus() {
   }
 }
 
-function isConfigEnabled(value, defaultValue = true) {
-  if (value === undefined || value === null) {
-    return defaultValue;
-  }
 
-  if (typeof value === "boolean") {
-    return value;
-  }
-
-  const normalized = String(value).trim().toLowerCase();
-  if (!normalized) {
-    return defaultValue;
-  }
-
-  return !["off", "false", "0", "disabled", "no"].includes(normalized);
-}
-
-function getScoreFunConfig(categoryKey) {
-  const raw = funMode.config?.scores?.[categoryKey];
-  if (Array.isArray(raw)) {
-    return { enabled: true, choices: raw };
-  }
-
-  if (raw && typeof raw === "object") {
-    return {
-      enabled: isConfigEnabled(raw.enabled, true),
-      choices: Array.isArray(raw.choices) ? raw.choices : [],
-    };
-  }
-
-  return { enabled: false, choices: [] };
-}
-
-function getConfigFunLine(categoryKey) {
-  const scoreConfig = getScoreFunConfig(categoryKey);
-  if (!scoreConfig.enabled) {
-    return "";
-  }
-
-  const choices = scoreConfig.choices.filter((choice) => isConfigEnabled(choice?.enabled, true));
-  if (!choices.length) {
-    return "";
-  }
-
-  const choice = choices[Math.floor(Math.random() * choices.length)];
-  return String(choice?.text || "").trim();
-}
-
-function clearFunFlash() {
-  if (funFlashHandle) {
-    window.clearTimeout(funFlashHandle);
-    funFlashHandle = null;
-  }
-
-  if (!els.funFlash) {
-    return;
-  }
-
-  els.funFlash.hidden = true;
-  els.funFlash.className = "fun-flash";
-}
-
-function renderFunToggle() {
-  if (!els.funToggle) {
-    return;
-  }
-
-  const isFunGloballyEnabled = Boolean(funMode.config) && isConfigEnabled(funMode.config?.enabled, true);
-  if (!isFunGloballyEnabled) {
-    els.funToggle.hidden = true;
-    return;
-  }
-
-  const isOn = funMode.enabled;
-  els.funToggle.hidden = false;
-  els.funToggle.classList.toggle("is-on", isOn);
-  els.funToggle.classList.toggle("is-off", !isOn);
-  els.funToggle.setAttribute("aria-pressed", isOn ? "true" : "false");
-  els.funToggle.title = isOn ? "Fun lines on. Tap to turn off." : "Fun lines off. Tap to turn on.";
-}
-
-function setFunMessagesEnabled(enabled, options = {}) {
-  const nextEnabled = Boolean(enabled);
-  const clearFlash = options.clearFlash !== false;
-  funMode.enabled = nextEnabled;
-  writeLocalValue(FUN_MESSAGES_ENABLED_KEY, nextEnabled ? "1" : "0");
-
-  if (!nextEnabled && clearFlash) {
-    clearFunFlash();
-  }
-  renderFunToggle();
-}
-
-async function requestAiFunLine(categoryKey, points) {
-  const payload = await fetchJson("/api/fun-line", {
-    method: "POST",
-    body: JSON.stringify({ categoryKey, points }),
-  });
-  return {
-    line: String(payload?.line || "").trim(),
-    source: payload?.source === "ai" ? "ai" : "fallback",
-  };
-}
-
-async function triggerFunMoment(categoryKey, points) {
-  if (!funMode.enabled || !funMode.config || !els.funFlash || !isConfigEnabled(funMode.config?.enabled, true)) {
-    return;
-  }
-
-  const scoreConfig = getScoreFunConfig(categoryKey);
-  if (!scoreConfig.enabled) {
-    return;
-  }
-
-  let line = "";
-  let isFreshAiLine = false;
-  try {
-    const aiResult = await requestAiFunLine(categoryKey, points);
-    line = aiResult.line;
-    isFreshAiLine = aiResult.source === "ai" && Boolean(aiResult.line);
-  } catch {
-    line = "";
-    isFreshAiLine = false;
-  }
-
-  if (!line) {
-    line = getConfigFunLine(categoryKey);
-    isFreshAiLine = false;
-  }
-
-  if (!line) {
-    return;
-  }
-
-  if (els.funFlashText) {
-    els.funFlashText.textContent = line;
-  }
-
-  els.funFlash.hidden = false;
-  els.funFlash.className = isFreshAiLine ? "fun-flash is-visible is-ai-fresh" : "fun-flash is-visible";
-
-  if (funFlashHandle) {
-    window.clearTimeout(funFlashHandle);
-  }
-  funFlashHandle = window.setTimeout(() => {
-    clearFunFlash();
-  }, 5000);
-}
-
-async function loadFunConfig() {
-  try {
-    const response = await fetch(FUN_CONFIG_URL, { cache: "no-store" });
-    if (!response.ok) {
-      throw new Error("Fun config not available");
-    }
-
-    const payload = await response.json();
-    if (!payload || typeof payload !== "object") {
-      throw new Error("Invalid fun config");
-    }
-
-    funMode.config = payload;
-  } catch {
-    funMode.config = {
-      enabled: false,
-      scores: {},
-    };
-  }
-
-  const isFunGloballyEnabled = isConfigEnabled(funMode.config?.enabled, true);
-  if (!isFunGloballyEnabled) {
-    clearFunFlash();
-    renderFunToggle();
-    return;
-  }
-
-  if (!funMode.enabled) {
-    clearFunFlash();
-  }
-  renderFunToggle();
-}
-
-function startFunConfigRefresh() {
-  if (funConfigRefreshHandle) {
-    return;
-  }
-
-  funConfigRefreshHandle = window.setInterval(() => {
-    loadFunConfig();
-  }, FUN_CONFIG_REFRESH_MS);
-}
 
 function clearTutorialHighlight() {
   if (!highlightedTutorialTarget) {
@@ -1089,7 +878,6 @@ function takeScoreLocal(categoryKey) {
   player.scores[categoryKey] = pointsScored;
   advanceTurnLocal();
   render();
-  triggerFunMomentAsync(categoryKey, pointsScored);
 }
 
 function updatePlayerNameLocal(playerIndex, value) {
@@ -1433,26 +1221,12 @@ els.scoreboardBody.addEventListener("click", (event) => {
   if (isOnlineMode()) {
     const categoryKey = button.dataset.scoreCategory;
     const pointsScored = scoreCategory(categoryKey, state.dice, getCurrentPlayer());
-    submitOnlineAction("takeScore", { categoryKey }, {
-      onSuccess: () => {
-        triggerFunMomentAsync(categoryKey, pointsScored);
-      },
-    });
+    submitOnlineAction("takeScore", { categoryKey });
     return;
   }
 
   takeScoreLocal(button.dataset.scoreCategory);
 });
-
-if (els.funToggle) {
-  els.funToggle.addEventListener("click", (event) => {
-    event.preventDefault();
-    if (!funMode.config || !isConfigEnabled(funMode.config?.enabled, true)) {
-      return;
-    }
-    setFunMessagesEnabled(!funMode.enabled);
-  });
-}
 
 els.tutorialNext.addEventListener("click", (event) => {
   event.preventDefault();
@@ -1501,10 +1275,6 @@ window.addEventListener("pagehide", (event) => {
 });
 
 document.addEventListener("visibilitychange", () => {
-  if (document.visibilityState === "visible") {
-    loadFunConfig();
-  }
-
   if (document.visibilityState === "hidden") {
     sendDisconnectSignal();
   }
@@ -1540,7 +1310,5 @@ els.playerOneInput.addEventListener("keydown", (event) => {
 
 render();
 window.addEventListener("load", () => {
-  loadFunConfig();
-  startFunConfigRefresh();
   tryEnableOnlineMode();
 });

@@ -4,9 +4,11 @@
   "private": true,
   "description": "Offline pass-and-play Yahtzee PWA.",
   "engines": {
-    "node": ">=18"
+    "node": "24.x"
   },
   "scripts": {
-    "start": "node server.js"
+    "start": "node server.js",
+    "check": "node --check server.js && node --check app.js && node --check sw.js",
+    "test": "node --test"
   }
 }

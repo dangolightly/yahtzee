@@ -51,6 +51,11 @@ const COMPLETED_GAME_TTL_MS = 10 * 60 * 1000;
 const DISCONNECT_GRACE_MS = 12 * 1000;
 const MAX_WAITING_GAMES = 10;
 const root = __dirname;
+// Only browser assets may be served; project files and local env files are private.
+const publicAssets = new Set([
+  "/index.html", "/styles.css", "/app.js", "/sw.js",
+  "/manifest.webmanifest", "/icon.svg",
+]);
 
 const categories = [
   { key: "ones", label: "Ones", section: "upper" },
@@ -912,14 +917,12 @@ async function handleApi(request, response, url) {
 
 function serveStatic(url, response) {
   const requestPath = url.pathname === "/" ? "/index.html" : url.pathname;
-  const normalizedPath = path.normalize(requestPath).replace(/^([.][.][/\\])+/, "");
-  const filePath = path.join(root, normalizedPath);
-
-  if (!filePath.startsWith(root)) {
-    response.writeHead(403, { "Content-Type": "text/plain; charset=utf-8" });
-    response.end("Forbidden");
+  if (!publicAssets.has(requestPath)) {
+    response.writeHead(404, { "Content-Type": "text/plain; charset=utf-8" });
+    response.end("Not found");
     return;
   }
+  const filePath = path.join(root, requestPath);
 
   fs.readFile(filePath, (error, data) => {
     if (error) {
@@ -959,7 +962,7 @@ function startServer(port) {
   });
 
   server.on("error", (error) => {
-    if (error.code === "EADDRINUSE") {
+    if (error.code === "EADDRINUSE" && !process.env.PORT) {
       startServer(port + 1);
       return;
     }
@@ -967,7 +970,7 @@ function startServer(port) {
     throw error;
   });
 
-  server.listen(port, () => {
+  server.listen(port, "0.0.0.0", () => {
     console.log(`Yahtzee Cabin running at http://localhost:${port}`);
   });
 }
